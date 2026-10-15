@@ -1,0 +1,603 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ECEFE4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#131913" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="기도나무">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<style>
+html { -webkit-text-size-adjust: 100%; color-scheme: light dark; }
+body { margin: 0; -webkit-tap-highlight-color: transparent; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+</style>
+<title>기도나무</title>
+<style>
+@font-face {
+  font-family: "Jeju Gothic";
+  src: local("Jeju Gothic"), local("JejuGothic"), url("JejuGothic.ttf") format("truetype");
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+/* Layout: one narrow phone column of soft pastel cards — verse note, little hill with a blossoming tree, round-day calendar, lined memo; year view swaps in 12 pink bars. */
+:root {
+  --bg: #FFF5F6;
+  --surface: #FFFFFF;
+  --ink: #4A3A40;
+  --muted: #A08D94;
+  --line: #F5DEE4;
+  --shadow: rgba(214, 140, 160, .16);
+  --leaf: #6FB383;
+  --leaf-soft: #E4F4E7;
+  --leaf-2: #A6D6AE;
+  --bark: #A0705A;
+  --bark-soft: #FFEFE6;
+  --butter: #FFF4CC;
+  --sky: #EEF6FF;
+  --sat: #6E95D6;
+  --sun-day: #E4637F;
+  --blossom: #F8BFCE;
+  --blossom-deep: #EE8FAA;
+  --blossom-core: #D5577A;
+  --blossom-soft: #FFE6EC;
+  --on-accent: #FFFFFF;
+  --font: "Jeju Gothic", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1F1A1D; --surface: #2A2327; --ink: #F5EAEE; --muted: #B9A6AE; --line: #3D3238; --shadow: rgba(0,0,0,.35);
+    --leaf: #8FCB9C; --leaf-soft: #263A2C; --leaf-2: #5E9A6C; --bark: #CFA084; --bark-soft: #3A2C2A;
+    --butter: #3B3524; --sky: #232B36; --sat: #97B6EA; --sun-day: #F28CA3;
+    --blossom: #EBA3B8; --blossom-deep: #E07D9A; --blossom-core: #FFD3DE; --blossom-soft: #43303A; --on-accent: #2A2327;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1F1A1D; --surface: #2A2327; --ink: #F5EAEE; --muted: #B9A6AE; --line: #3D3238; --shadow: rgba(0,0,0,.35);
+  --leaf: #8FCB9C; --leaf-soft: #263A2C; --leaf-2: #5E9A6C; --bark: #CFA084; --bark-soft: #3A2C2A;
+  --butter: #3B3524; --sky: #232B36; --sat: #97B6EA; --sun-day: #F28CA3;
+  --blossom: #EBA3B8; --blossom-deep: #E07D9A; --blossom-core: #FFD3DE; --blossom-soft: #43303A; --on-accent: #2A2327;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font); font-size: 15px; line-height: 1.6; font-weight: 400;
+  padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px));
+  padding-block: calc(18px + env(safe-area-inset-top, 0px)) calc(40px + env(safe-area-inset-bottom, 0px));
+}
+b, strong, h1, h2 { font-weight: 400; }
+.app { max-width: 460px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+header { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-inline: 4px; }
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand svg { width: 34px; height: 34px; flex: none; }
+h1 { font-size: 1.55rem; margin: 0; letter-spacing: -0.02em; color: var(--blossom-core); }
+.brand small { display: block; font-size: .74rem; color: var(--muted); margin-top: -2px; }
+.save-state { font-size: .74rem; color: var(--muted); }
+.card { background: var(--surface); border-radius: 26px; padding: 18px; box-shadow: 0 8px 22px var(--shadow); }
+button { font: inherit; color: inherit; cursor: pointer; -webkit-user-select: none; user-select: none; touch-action: manipulation; }
+button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 3px solid var(--blossom); outline-offset: 2px; }
+.label { font-size: .78rem; color: var(--muted); }
+
+/* verse */
+.verse { position: relative; background: linear-gradient(160deg, var(--blossom-soft), var(--bark-soft)); overflow: hidden; }
+.verse::before { content: ""; position: absolute; right: -18px; bottom: -22px; width: 90px; height: 90px; border-radius: 50%; background: var(--blossom); opacity: .25; pointer-events: none; }
+.verse::after { content: ""; position: absolute; right: 46px; bottom: -14px; width: 40px; height: 40px; border-radius: 50%; background: var(--blossom-deep); opacity: .15; pointer-events: none; }
+.verse blockquote { position: relative; margin: 8px 0 0; font-size: 1.1rem; line-height: 1.8; white-space: pre-wrap; text-wrap: pretty; }
+.verse cite { display: inline-block; margin-top: 10px; font-style: normal; font-size: .82rem; color: var(--blossom-core); background: var(--surface); border-radius: 999px; padding: 3px 12px; }
+.verse .empty { color: var(--muted); }
+.verse-head { position: relative; display: flex; justify-content: space-between; align-items: center; }
+.link-btn { background: var(--surface); border: 0; border-radius: 999px; padding: 5px 14px; font-size: .82rem; color: var(--blossom-core); box-shadow: 0 2px 8px var(--shadow); }
+.verse-form { position: relative; display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+textarea, input[type="text"] {
+  width: 100%; font: inherit; color: var(--ink); background: var(--surface);
+  border: 2px solid var(--line); border-radius: 16px; padding: 10px 14px; resize: vertical;
+}
+#verseText { min-height: 90px; }
+.row-end { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+.btn { border: 2px solid var(--line); background: var(--surface); border-radius: 999px; padding: 7px 18px; font-size: .9rem; }
+.btn.primary { background: var(--blossom-deep); border-color: var(--blossom-deep); color: var(--on-accent); }
+
+/* tabs + nav */
+.tabs { display: grid; grid-template-columns: 1fr 1fr; background: var(--surface); border-radius: 999px; padding: 5px; box-shadow: 0 4px 14px var(--shadow); }
+.tabs button { border: 0; background: none; border-radius: 999px; padding: 9px; font-size: .95rem; color: var(--muted); transition: background .2s, color .2s; }
+.tabs button[aria-selected="true"] { background: var(--blossom-deep); color: var(--on-accent); }
+.nav { display: flex; align-items: center; justify-content: space-between; }
+.nav h2 { margin: 0; font-size: 1.35rem; font-variant-numeric: tabular-nums; }
+.nav-btn { width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--blossom-soft); color: var(--blossom-core); display: grid; place-items: center; padding: 0; }
+.nav-btn svg { width: 22px; height: 22px; }
+.nav-btn:active { transform: scale(.92); }
+.today-btn { font-size: .76rem; color: var(--blossom-core); background: none; border: 0; padding: 2px 6px; }
+
+/* tree */
+.tree-card { background: linear-gradient(180deg, var(--sky), var(--surface) 75%); position: relative; }
+.tree-wrap svg { width: 100%; max-width: 100%; height: auto; display: block; }
+.tree-count { position: absolute; right: 16px; bottom: 14px; background: var(--surface); border-radius: 18px; padding: 6px 12px; text-align: center; box-shadow: 0 4px 12px var(--shadow); }
+.tree-count b { display: block; font-size: 1.8rem; line-height: 1.1; color: var(--blossom-core); font-variant-numeric: tabular-nums; }
+.tree-count span { font-size: .72rem; color: var(--muted); }
+.bloom { transform-box: fill-box; transform-origin: 50% 50%; }
+.bloom.new { animation: bloom .8s cubic-bezier(.2,.9,.3,1.4); }
+@keyframes bloom { from { transform: scale(0) rotate(-120deg); opacity: 0; } }
+.petal-fall { animation: fall 2.6s ease-in forwards; }
+@keyframes fall { to { transform: translate(var(--dx), 120px) rotate(260deg); opacity: 0; } }
+.cloud { animation: drift 9s ease-in-out infinite alternate; }
+@keyframes drift { to { transform: translateX(14px); } }
+
+/* calendar */
+.cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px 4px; }
+.dow { text-align: center; font-size: .78rem; color: var(--muted); padding-bottom: 2px; }
+.dow.sun { color: var(--sun-day); }
+.dow.sat { color: var(--sat); }
+.day {
+  position: relative; width: 100%; aspect-ratio: 1; max-width: 100%; border: 2px solid transparent; border-radius: 50%;
+  background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0;
+  font-size: .92rem; font-variant-numeric: tabular-nums; padding: 0; line-height: 1.1;
+}
+.day.sun { color: var(--sun-day); }
+.day.sat { color: var(--sat); }
+.day:hover { background: var(--blossom-soft); }
+.day.today { border: 2px dashed var(--leaf); }
+.day.on { background: var(--blossom); color: var(--blossom-core); }
+.day.on.pop { animation: pop .35s ease-out; }
+@keyframes pop { 40% { transform: scale(1.18); } }
+.day svg { width: 15px; height: 15px; }
+.day .dot { width: 15px; height: 15px; }
+.hint { font-size: .78rem; color: var(--muted); margin: 12px 0 0; }
+
+/* stats */
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.stat { border-radius: 20px; padding: 10px 12px; min-width: 0; background: var(--blossom-soft); }
+.stat:nth-child(2) { background: var(--leaf-soft); }
+.stat:nth-child(3) { background: var(--butter); }
+.stat b { display: block; font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+.stat b small { font-size: .8rem; color: var(--muted); margin-left: 2px; }
+
+/* memo: lined note paper */
+#memo {
+  min-height: 140px; margin-top: 8px; border: 0; border-radius: 16px; padding: 4px 14px;
+  line-height: 32px; background: repeating-linear-gradient(var(--surface) 0 31px, var(--line) 31px 32px);
+  background-attachment: local;
+}
+.memo-head { display: flex; justify-content: space-between; align-items: baseline; }
+
+/* year view */
+.months { display: flex; flex-direction: column; gap: 4px; }
+.mrow { display: grid; grid-template-columns: 38px 1fr 58px; align-items: center; gap: 10px; border: 0; background: none; padding: 7px 6px; border-radius: 14px; text-align: left; }
+.mrow:hover { background: var(--blossom-soft); }
+.mrow .m { font-size: .9rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.branch { position: relative; height: 14px; background: var(--blossom-soft); border-radius: 999px; overflow: hidden; }
+.branch i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, var(--blossom), var(--blossom-deep)); border-radius: 999px; }
+.mrow .n { text-align: right; font-variant-numeric: tabular-nums; font-size: .9rem; }
+.mrow .memo-flag { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--blossom-deep); margin-left: 5px; vertical-align: 2px; }
+.years { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; }
+.yrow { display: flex; justify-content: space-between; border: 0; background: none; padding: 9px 6px; border-bottom: 2px dotted var(--line); font-variant-numeric: tabular-nums; }
+.yrow:last-child { border-bottom: 0; }
+.yrow.cur { color: var(--blossom-core); }
+.note { font-size: .76rem; color: var(--muted); text-align: center; }
+@media (prefers-reduced-motion: reduce) {
+  .bloom.new, .petal-fall, .cloud, .day.on.pop { animation: none; }
+  .petal-fall { display: none; }
+}
+</style>
+
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <svg viewBox="-12 -12 24 24" aria-hidden="true" id="brandIcon"></svg>
+      <div><h1>기도나무</h1><small>기도한 날마다 벚꽃 한 송이</small></div>
+    </div>
+    <span class="save-state" id="saveState"></span>
+  </header>
+
+  <section class="card verse" aria-label="오늘의 말씀">
+    <div class="verse-head">
+      <span class="label">마음에 새길 말씀</span>
+      <button class="link-btn" id="verseEdit" type="button">적기</button>
+    </div>
+    <div id="verseView"></div>
+    <form class="verse-form" id="verseForm" hidden>
+      <textarea id="verseText" placeholder="여호와는 나의 목자시니 내게 부족함이 없으리로다"></textarea>
+      <input type="text" id="verseRef" placeholder="시편 23:1">
+      <div class="row-end">
+        <button class="btn" type="button" id="verseCancel">취소</button>
+        <button class="btn primary" type="submit">저장</button>
+      </div>
+    </form>
+  </section>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" id="tabMonth" aria-selected="true" type="button">월별</button>
+    <button role="tab" id="tabYear" aria-selected="false" type="button">연도별</button>
+  </div>
+
+  <div class="nav">
+    <button class="nav-btn" id="prev" type="button" aria-label="이전"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 L8 12 L15 19" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <div style="text-align:center">
+      <h2 id="navTitle"></h2>
+      <button class="today-btn" id="goToday" type="button">오늘로</button>
+    </div>
+    <button class="nav-btn" id="next" type="button" aria-label="다음"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5 L16 12 L9 19" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <!-- month view -->
+  <div id="monthView" style="display:flex;flex-direction:column;gap:14px">
+    <section class="card tree-card">
+      <div class="tree-wrap">
+        <svg id="tree" viewBox="0 0 300 210" role="img" aria-label="이번 달 기도한 날만큼 벚꽃이 피는 나무"></svg>
+        <div class="tree-count"><b id="treeNum">0</b><span>송이</span></div>
+      </div>
+    </section>
+    <section class="card">
+      <div class="cal" id="cal"></div>
+      <p class="hint">날짜를 누르면 기도한 날로 체크되고 나무에 벚꽃이 한 송이 피어요. 다시 누르면 해제돼요.</p>
+    </section>
+    <section class="card">
+      <div class="memo-head">
+        <span class="label" id="memoLabel">이달의 기도 메모</span>
+        <span class="save-state" id="memoState"></span>
+      </div>
+      <textarea id="memo" placeholder="이번 달 기도 제목, 응답받은 일, 감사한 일을 적어 보세요."></textarea>
+    </section>
+  </div>
+
+  <!-- year view -->
+  <div id="yearView" hidden style="flex-direction:column;gap:14px">
+    <section class="card">
+      <span class="label">월별 기도 일수</span>
+      <div class="months" id="months" style="margin-top:8px"></div>
+    </section>
+    <section class="card">
+      <span class="label">연도별 누적</span>
+      <div class="years" id="years"></div>
+    </section>
+    <section class="card">
+      <span class="label">기록 백업</span>
+      <p class="hint" style="margin-top:6px">기록은 지금 쓰는 이 휴대폰(브라우저)에만 저장돼요. 브라우저 기록을 지우거나 휴대폰을 바꾸기 전에 백업 코드를 복사해 메모장이나 카톡 나에게 보내기에 보관해 두세요.</p>
+      <div class="row-end" style="justify-content:flex-start;margin-top:10px">
+        <button class="btn primary" type="button" id="backupCopy">백업 코드 복사</button>
+        <button class="btn" type="button" id="restoreOpen">백업 불러오기</button>
+      </div>
+      <textarea id="backupBox" readonly hidden style="margin-top:10px;min-height:70px;font-size:.75rem"></textarea>
+      <div id="restoreArea" hidden style="margin-top:10px;display:flex;flex-direction:column;gap:8px">
+        <textarea id="restoreText" placeholder="보관해 둔 백업 코드를 붙여넣으세요" style="min-height:70px;font-size:.75rem"></textarea>
+        <div class="row-end">
+          <button class="btn" type="button" id="restoreCancel">취소</button>
+          <button class="btn primary" type="button" id="restoreGo">불러오기</button>
+        </div>
+      </div>
+      <p class="hint" id="backupMsg" role="status"></p>
+    </section>
+  </div>
+
+  <p class="note" id="storeNote"></p>
+</div>
+
+<script>
+(function () {
+  const now = new Date();
+  const S = {
+    view: 'month',
+    y: now.getFullYear(),
+    m: now.getMonth() + 1,
+    years: {},          // { "2026": { days: { "10": [1,3] }, memo: { "10": "..." } } }
+    verse: { text: '', ref: '' }
+  };
+  const $ = id => document.getElementById(id);
+  const LS_KEY = 'prayer-tree-v1';
+
+  /* ---------- storage: each phone keeps its own record in its browser ---------- */
+  let storageOk = true;
+  function lsLoad() {
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (raw) { const d = JSON.parse(raw); S.years = d.years || {}; S.verse = d.verse || S.verse; }
+    } catch (e) { storageOk = false; }
+  }
+  function setSaving(t) { $('saveState').textContent = t; }
+  function persist() {
+    try {
+      localStorage.setItem(LS_KEY, JSON.stringify({ years: S.years, verse: S.verse }));
+      setSaving('이 휴대폰에 저장됨');
+    } catch (e) {
+      storageOk = false;
+      setSaving('저장하지 못했어요');
+      $('storeNote').textContent = '이 브라우저는 저장을 막고 있어요(시크릿 모드 등). 일반 모드로 열어 주세요.';
+    }
+    return Promise.resolve();
+  }
+
+  /* ---------- data helpers ---------- */
+  function yearDoc(y) {
+    y = String(y);
+    if (!S.years[y]) S.years[y] = { days: {}, memo: {} };
+    return S.years[y];
+  }
+  function monthDays(y, m) { const d = S.years[String(y)]; return (d && d.days[String(m)]) || []; }
+  function monthMemo(y, m) { const d = S.years[String(y)]; return (d && d.memo[String(m)]) || ''; }
+  function yearTotal(y) { const d = S.years[String(y)]; if (!d) return 0; return Object.values(d.days).reduce((a, v) => a + v.length, 0); }
+  function allTotal() { return Object.keys(S.years).reduce((a, y) => a + yearTotal(y), 0); }
+  function daysIn(y, m) { return new Date(y, m, 0).getDate(); }
+
+  /* ---------- tree ---------- */
+  // fixed leaf spots across the canopy, filled in order as the month grows
+  const spots = (function () {
+    let s = 7; const rnd = () => (s = (s * 9301 + 49297) % 233280) / 233280;
+    const out = [];
+    let gap = 28, tries = 0;
+    while (out.length < 31) {
+      if (++tries > 4000) { gap -= 1; tries = 0; }
+      const x = 150 + (rnd() * 2 - 1) * 120, y = 84 + (rnd() * 2 - 1) * 70;
+      if (((x - 150) / 124) ** 2 + ((y - 84) / 72) ** 2 > 1) continue;
+      if (out.some(p => Math.hypot(p.x - x, p.y - y) < gap)) continue;
+      out.push({ x, y, r: Math.round(rnd() * 72) });
+    }
+    return out; // random order, so each new blossom lands somewhere new on the tree
+  })();
+  function blossom(x, y, r, size, isNew) {
+    const k = size;
+    let p = '';
+    for (let i = 0; i < 5; i++) {
+      // notched cherry petal pointing up, rotated around the centre
+      p += '<path transform="rotate(' + (i * 72) + ')" d="M0 0 C' + (-4.6 * k) + ' ' + (-2.5 * k) + ' ' + (-5 * k) + ' ' + (-8 * k) + ' ' + (-1.6 * k) + ' ' + (-9.4 * k) +
+        ' L0 ' + (-8 * k) + ' L' + (1.6 * k) + ' ' + (-9.4 * k) + ' C' + (5 * k) + ' ' + (-8 * k) + ' ' + (4.6 * k) + ' ' + (-2.5 * k) + ' 0 0 Z" fill="var(--blossom)" stroke="var(--blossom-deep)" stroke-width=".5"/>';
+    }
+    p += '<circle r="' + (2.2 * k) + '" fill="var(--blossom-deep)"/>';
+    for (let i = 0; i < 5; i++) {
+      const a = (i * 72 + 36) * Math.PI / 180;
+      p += '<circle cx="' + (Math.sin(a) * 3.4 * k).toFixed(2) + '" cy="' + (-Math.cos(a) * 3.4 * k).toFixed(2) + '" r="' + (0.7 * k) + '" fill="var(--blossom-core)"/>';
+    }
+    return '<g transform="translate(' + x.toFixed(1) + ' ' + y.toFixed(1) + ') rotate(' + r + ')"><g class="bloom' + (isNew ? ' new' : '') + '">' + p + '</g></g>';
+  }
+  function fallingPetal(x, y, i) {
+    const dx = (i % 2 ? 1 : -1) * (18 + i * 9);
+    return '<g transform="translate(' + x.toFixed(1) + ' ' + y.toFixed(1) + ')"><path class="petal-fall" style="--dx:' + dx + 'px;animation-delay:' + (0.3 + i * 0.35) + 's" d="M0 0 C-3 -2 -3 -6 -1 -7 L0 -6 L1 -7 C3 -6 3 -2 0 0 Z" fill="var(--blossom)"/></g>';
+  }
+  let lastLeafCount = null, lastLeafKey = '';
+  function drawTree(count) {
+    const key = S.y + '-' + S.m;
+    const prev = key === lastLeafKey && lastLeafCount !== null ? lastLeafCount : count;
+    // little scene: sun, drifting cloud, soft canopy glow
+    let h = '<circle cx="34" cy="34" r="15" fill="var(--butter)"/><circle cx="34" cy="34" r="10" fill="#FFD66B" opacity=".9"/>';
+    h += '<ellipse cx="150" cy="86" rx="130" ry="78" fill="var(--blossom-soft)" opacity=".75"/>';
+    h += '<g class="cloud" fill="var(--surface)"><ellipse cx="236" cy="26" rx="18" ry="9"/><ellipse cx="250" cy="19" rx="13" ry="11"/><ellipse cx="264" cy="27" rx="14" ry="8"/></g>';
+    h += '<path d="M141 210 C144 180 146 150 143 118 L157 118 C154 150 156 180 159 210 Z" fill="var(--bark)"/>';
+    h += '<g fill="none" stroke="var(--bark)" stroke-linecap="round">' +
+      '<path d="M148 140 C130 120 104 112 78 96" stroke-width="5"/>' +
+      '<path d="M152 132 C172 112 198 104 226 88" stroke-width="5"/>' +
+      '<path d="M150 122 C148 96 152 70 150 40" stroke-width="5"/>' +
+      '<path d="M104 110 C96 92 98 74 92 58" stroke-width="3"/>' +
+      '<path d="M200 102 C210 86 206 70 214 54" stroke-width="3"/>' +
+      '<path d="M150 80 C130 66 120 52 112 36" stroke-width="2.5"/>' +
+      '<path d="M151 70 C168 58 178 46 188 34" stroke-width="2.5"/></g>';
+    // rounded grassy hill with tiny flowers
+    h += '<ellipse cx="150" cy="226" rx="200" ry="44" fill="var(--leaf-2)" opacity=".55"/>';
+    h += '<ellipse cx="150" cy="230" rx="170" ry="40" fill="var(--leaf-soft)"/>';
+    [[40, 204], [78, 198], [222, 197], [262, 203], [112, 200], [188, 200]].forEach(([fx, fy], i) => {
+      h += '<circle cx="' + fx + '" cy="' + fy + '" r="2.6" fill="' + (i % 2 ? 'var(--blossom-deep)' : '#FFD66B') + '"/>';
+    });
+    let falls = '';
+    for (let i = 0; i < Math.min(count, spots.length); i++) {
+      const p = spots[i], isNew = i >= prev;
+      h += blossom(p.x, p.y, p.r, i % 4 === 2 ? 1.2 : 1.45, isNew);
+      if (isNew) falls += fallingPetal(p.x, p.y, 0) + fallingPetal(p.x, p.y, 1);
+    }
+    h += falls;
+    $('tree').innerHTML = h;
+    $('treeNum').textContent = count;
+    lastLeafCount = count; lastLeafKey = key;
+  }
+  const LEAF_ICON = '<svg viewBox="-10 -10 20 20" aria-hidden="true">' +
+    blossom(0, 0, 0, 0.95, false).replace('class="bloom"', '') + '</svg>';
+  $('brandIcon').innerHTML = blossom(0, 1, 0, 1.15, false).replace('class="bloom"', '');
+  let justToggled = 0;
+
+  /* ---------- render ---------- */
+  function renderVerse() {
+    const v = S.verse;
+    $('verseView').innerHTML = '';
+    if (v.text) {
+      const q = document.createElement('blockquote'); q.textContent = v.text; $('verseView').appendChild(q);
+      if (v.ref) { const c = document.createElement('cite'); c.textContent = v.ref; $('verseView').appendChild(c); }
+      $('verseEdit').textContent = '고치기';
+    } else {
+      const p = document.createElement('p'); p.className = 'empty'; p.style.margin = '8px 0 0';
+      p.textContent = '붙잡고 싶은 말씀 한 구절을 적어 두세요.'; $('verseView').appendChild(p);
+      $('verseEdit').textContent = '적기';
+    }
+  }
+
+  function renderStats() {
+    const items = S.view === 'month'
+      ? [['이번 달', monthDays(S.y, S.m).length], [S.y + '년 누적', yearTotal(S.y)], ['전체 누적', allTotal()]]
+      : [[S.y + '년', yearTotal(S.y)], ['월 평균', (yearTotal(S.y) / 12).toFixed(1)], ['전체 누적', allTotal()]];
+    $('stats').innerHTML = items.map(([l, n]) =>
+      '<div class="stat"><span class="label">' + l + '</span><b>' + n + '<small>일</small></b></div>').join('');
+  }
+
+  function renderMonth() {
+    const days = monthDays(S.y, S.m);
+    const set = new Set(days);
+    const first = new Date(S.y, S.m - 1, 1).getDay();
+    const n = daysIn(S.y, S.m);
+    const isThisMonth = S.y === now.getFullYear() && S.m === now.getMonth() + 1;
+    let h = ['일', '월', '화', '수', '목', '금', '토'].map((d, i) => '<div class="dow' + (i === 0 ? ' sun' : i === 6 ? ' sat' : '') + '">' + d + '</div>').join('');
+    for (let i = 0; i < first; i++) h += '<div></div>';
+    for (let d = 1; d <= n; d++) {
+      const on = set.has(d), wd = (first + d - 1) % 7;
+      const cls = 'day' + (wd === 0 ? ' sun' : wd === 6 ? ' sat' : '') + (on ? ' on' : '') + (on && d === justToggled ? ' pop' : '') +
+        (isThisMonth && d === now.getDate() ? ' today' : '');
+      h += '<button type="button" class="' + cls + '" data-day="' + d + '" aria-pressed="' + on + '" aria-label="' + S.m + '월 ' + d + '일' + (on ? ' 기도함' : '') + '">' +
+        '<span>' + d + '</span>' + (on ? LEAF_ICON : '<span class="dot"></span>') + '</button>';
+    }
+    $('cal').innerHTML = h;
+    justToggled = 0;
+    drawTree(days.length);
+    $('memoLabel').textContent = S.m + '월의 기도 메모';
+    if (document.activeElement !== $('memo')) $('memo').value = monthMemo(S.y, S.m);
+  }
+
+  function renderYear() {
+    let h = '';
+    for (let m = 1; m <= 12; m++) {
+      const c = monthDays(S.y, m).length, total = daysIn(S.y, m);
+      h += '<button type="button" class="mrow" data-month="' + m + '"><span class="m">' + m + '월</span>' +
+        '<span class="branch"><i style="width:' + (c / total * 100) + '%"></i></span>' +
+        '<span class="n">' + c + '일' + (monthMemo(S.y, m) ? '<span class="memo-flag" title="메모 있음"></span>' : '') + '</span></button>';
+    }
+    $('months').innerHTML = h;
+    const ys = new Set(Object.keys(S.years).filter(y => yearTotal(y) > 0));
+    ys.add(String(S.y)); ys.add(String(now.getFullYear()));
+    let acc = 0;
+    const rows = [...ys].sort().map(y => { acc += yearTotal(y); return { y, t: yearTotal(y), acc }; }).reverse();
+    $('years').innerHTML = rows.map(r =>
+      '<button type="button" class="yrow' + (r.y === String(S.y) ? ' cur' : '') + '" data-year="' + r.y + '"><span>' + r.y + '년</span><span>' + r.t + '일 · 누적 ' + r.acc + '일</span></button>').join('');
+  }
+
+  function render() {
+    const month = S.view === 'month';
+    $('tabMonth').setAttribute('aria-selected', month);
+    $('tabYear').setAttribute('aria-selected', !month);
+    $('monthView').style.display = month ? 'flex' : 'none';
+    $('yearView').hidden = month;
+    $('yearView').style.display = month ? 'none' : 'flex';
+    $('navTitle').textContent = month ? S.y + '년 ' + S.m + '월' : S.y + '년';
+    renderVerse(); renderStats();
+    if (month) renderMonth(); else renderYear();
+  }
+
+  /* ---------- events ---------- */
+  $('cal').addEventListener('click', e => {
+    const b = e.target.closest('[data-day]'); if (!b) return;
+    const d = +b.dataset.day, doc = yearDoc(S.y), key = String(S.m);
+    justToggled = d;
+    const arr = doc.days[key] ? [...doc.days[key]] : [];
+    const i = arr.indexOf(d);
+    if (i >= 0) arr.splice(i, 1); else arr.push(d);
+    arr.sort((a, b) => a - b);
+    if (arr.length) doc.days[key] = arr; else delete doc.days[key];
+    render(); persist('y' + S.y);
+  });
+
+  let memoTimer = null, memoTarget = null;
+  function flushMemo() {
+    if (!memoTarget) return;
+    const t = memoTarget; memoTarget = null; clearTimeout(memoTimer);
+    persist('y' + t.y).then(() => { $('memoState').textContent = '저장됨'; });
+  }
+  $('memo').addEventListener('input', () => {
+    const doc = yearDoc(S.y), v = $('memo').value;
+    if (v) doc.memo[String(S.m)] = v; else delete doc.memo[String(S.m)];
+    memoTarget = { y: S.y };
+    $('memoState').textContent = '입력 중…';
+    clearTimeout(memoTimer); memoTimer = setTimeout(flushMemo, 800);
+  });
+  $('memo').addEventListener('blur', flushMemo);
+
+  function move(step) {
+    flushMemo();
+    if (S.view === 'month') {
+      S.m += step;
+      if (S.m < 1) { S.m = 12; S.y--; } else if (S.m > 12) { S.m = 1; S.y++; }
+    } else S.y += step;
+    $('memoState').textContent = '';
+    render();
+  }
+  $('prev').addEventListener('click', () => move(-1));
+  $('next').addEventListener('click', () => move(1));
+  $('goToday').addEventListener('click', () => { flushMemo(); S.y = now.getFullYear(); S.m = now.getMonth() + 1; render(); });
+  $('tabMonth').addEventListener('click', () => { S.view = 'month'; render(); });
+  $('tabYear').addEventListener('click', () => { flushMemo(); S.view = 'year'; render(); });
+  $('months').addEventListener('click', e => {
+    const b = e.target.closest('[data-month]'); if (!b) return;
+    S.m = +b.dataset.month; S.view = 'month'; render();
+  });
+  $('years').addEventListener('click', e => {
+    const b = e.target.closest('[data-year]'); if (!b) return;
+    S.y = +b.dataset.year; render();
+  });
+
+  // swipe left/right to move months
+  // (a clear sideways swipe only — taps on any day, weekends included, never count as a swipe)
+  let tx = null, ty = 0;
+  document.addEventListener('touchstart', e => {
+    tx = e.target.closest('textarea,input,button') ? null : e.touches[0].clientX; ty = e.touches[0].clientY;
+  }, { passive: true });
+  document.addEventListener('touchend', e => {
+    if (tx === null) return;
+    const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty; tx = null;
+    if (Math.abs(dx) > 80 && Math.abs(dx) > Math.abs(dy) * 2) move(dx < 0 ? 1 : -1);
+  });
+
+  // verse editing
+  function openVerse(open) {
+    $('verseForm').hidden = !open; $('verseView').hidden = open; $('verseEdit').hidden = open;
+    if (open) { $('verseText').value = S.verse.text; $('verseRef').value = S.verse.ref; $('verseText').focus(); }
+  }
+  $('verseEdit').addEventListener('click', () => openVerse(true));
+  $('verseCancel').addEventListener('click', () => openVerse(false));
+  $('verseForm').addEventListener('submit', e => {
+    e.preventDefault();
+    S.verse = { text: $('verseText').value.trim(), ref: $('verseRef').value.trim() };
+    openVerse(false); render(); persist('verse');
+  });
+
+  // backup: the whole record as one code the person can keep anywhere
+  function makeCode() {
+    const json = JSON.stringify({ v: 1, years: S.years, verse: S.verse });
+    return 'PT1:' + btoa(unescape(encodeURIComponent(json)));
+  }
+  $('backupCopy').addEventListener('click', () => {
+    const code = makeCode(), box = $('backupBox');
+    box.value = code; box.hidden = false;
+    const done = () => { $('backupMsg').textContent = '백업 코드를 복사했어요. 안전한 곳에 붙여넣어 보관하세요.'; };
+    const fallback = () => { box.focus(); box.select(); $('backupMsg').textContent = '아래 코드를 길게 눌러 전체 선택 후 복사해 주세요.'; };
+    try { navigator.clipboard.writeText(code).then(done, fallback); } catch (e) { fallback(); }
+  });
+  let restoreArmed = false;
+  $('restoreOpen').addEventListener('click', () => { $('restoreArea').hidden = false; $('restoreText').focus(); });
+  $('restoreCancel').addEventListener('click', () => {
+    $('restoreArea').hidden = true; restoreArmed = false; $('restoreGo').textContent = '불러오기'; $('backupMsg').textContent = '';
+  });
+  $('restoreGo').addEventListener('click', () => {
+    let data;
+    try {
+      const raw = $('restoreText').value.trim().replace(/^PT1:/, '');
+      data = JSON.parse(decodeURIComponent(escape(atob(raw))));
+      if (!data || typeof data.years !== 'object') throw 0;
+    } catch (e) { $('backupMsg').textContent = '백업 코드를 읽을 수 없어요. 코드 전체를 빠짐없이 붙여넣었는지 확인해 주세요.'; return; }
+    if (!restoreArmed) {
+      restoreArmed = true; $('restoreGo').textContent = '네, 덮어쓰기';
+      $('backupMsg').textContent = '지금 이 휴대폰의 기록이 백업 내용으로 바뀌어요. 계속하려면 한 번 더 눌러 주세요.';
+      return;
+    }
+    S.years = data.years || {}; S.verse = data.verse || { text: '', ref: '' };
+    persist(); restoreArmed = false; $('restoreGo').textContent = '불러오기';
+    $('restoreArea').hidden = true; $('restoreText').value = '';
+    $('backupMsg').textContent = '백업을 불러왔어요.';
+    render();
+  });
+
+  lsLoad();
+  if (!storageOk) $('storeNote').textContent = '이 브라우저는 저장을 막고 있어요(시크릿 모드 등). 일반 모드로 열어 주세요.';
+  else $('storeNote').textContent = '로그인 없이 이 휴대폰에만 저장돼요. 다른 사람의 기록과 섞이지 않아요.';
+  render();
+})();
+</script>
+
+<script>
+if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
+  window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+}
+</script>
+</body>
+</html>
