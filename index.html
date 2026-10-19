@@ -187,7 +187,7 @@ textarea, input[type="text"] {
 .memo-head { display: flex; justify-content: space-between; align-items: baseline; }
 
 /* two pages side by side: swipe or tap the switch */
-.page-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.page-switch { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
 .page-switch button {
   border: 0; border-radius: 18px; padding: 10px 8px; background: var(--surface); color: var(--muted);
   box-shadow: 0 4px 14px var(--shadow); display: flex; align-items: center; justify-content: center; gap: 6px; font-size: .95rem;
@@ -217,6 +217,9 @@ textarea, input[type="text"] {
 .k-sun .kind-chip { background: var(--blossom-soft); color: var(--blossom-core); }
 .k-fri .kind-chip { background: var(--sky); color: var(--sat); }
 .k-qt .kind-chip { background: var(--leaf-soft); color: var(--leaf); }
+.k-youth .kind-chip { background: var(--butter); color: var(--bark); }
+.ref-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.copy-btn { border: 0; border-radius: 999px; padding: 6px 12px; font-size: .8rem; background: var(--bg); color: var(--muted); }
 .field-label { font-size: .78rem; color: var(--muted); margin-top: 4px; }
 .word-text { min-height: 96px; background: var(--bg); border-color: transparent; }
 .word-card .lined { margin-top: 0; box-shadow: inset 0 0 0 2px var(--line); }
@@ -283,8 +286,10 @@ textarea, input[type="text"] {
       <svg viewBox="-10 -10 20 20" aria-hidden="true" id="goPrayIcon"></svg>기도 기록</button>
     <button type="button" role="tab" id="goWord" aria-selected="false" aria-controls="pageWord">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6 C9 4 6 4 3 5 V19 C6 18 9 18 12 20 C15 18 18 18 21 19 V5 C18 4 15 4 12 6 Z M12 6 V20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>말씀 노트</button>
+    <button type="button" role="tab" id="goQt" aria-selected="false" aria-controls="pageQt">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 V5 M12 19 V21 M3 12 H5 M19 12 H21 M5.6 5.6 L7 7 M17 17 L18.4 18.4 M5.6 18.4 L7 17 M17 7 L18.4 5.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>QT</button>
   </div>
-  <div class="dots" aria-hidden="true"><i class="on"></i><i></i></div>
+  <div class="dots" aria-hidden="true"><i class="on"></i><i></i><i></i></div>
 
   <div class="pager" id="pager">
   <div class="page" id="pagePray" role="tabpanel" aria-label="기도 기록">
@@ -394,6 +399,23 @@ textarea, input[type="text"] {
       <div class="note-list" id="weekList"></div>
     </section>
   </div><!-- /pageWord -->
+
+  <div class="page" id="pageQt" role="tabpanel" aria-label="QT">
+    <div class="nav">
+      <button class="nav-btn" id="qPrev" type="button" aria-label="지난 주"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 L8 12 L15 19" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <div class="week-head">
+        <h2 id="qWeekTitle"></h2>
+        <span class="week-chip" id="qWeekChip"></span>
+        <button class="today-btn" id="qToday" type="button">오늘로</button>
+      </div>
+      <button class="nav-btn" id="qNext" type="button" aria-label="다음 주"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5 L16 12 L9 19" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    </div>
+    <div id="qtCard"></div>
+    <section class="card">
+      <span class="label">QT 기록</span>
+      <div class="note-list" id="qtList"></div>
+    </section>
+  </div><!-- /pageQt -->
   </div><!-- /pager -->
 
   <p class="note" id="storeNote"></p>
@@ -720,26 +742,30 @@ textarea, input[type="text"] {
     S.y = +b.dataset.year; render();
   });
 
-  /* ---------- sermon / QT notes, one sheet per week (Sunday to Saturday) ---------- */
+  /* ---------- 말씀 노트 (weekly services) and QT (daily) ---------- */
+  // S.word = { "2026-10-18" (week's Sunday): { sun, fri, youth: {ref,title,text,think}, qtd: { "0".."6": {...} } } }
   const KINDS = [
-    { k: 'sun', chip: '주일', name: '주일 말씀', titleLabel: '설교 제목' },
-    { k: 'fri', chip: '금요', name: '금요예배 말씀', titleLabel: '설교 제목' },
-    { k: 'qt',  chip: 'QT',   name: '매일 QT', titleLabel: '묵상 제목' }
+    { k: 'sun',   chip: '주일', name: '주일예배' },
+    { k: 'fri',   chip: '금요', name: '금요예배' },
+    { k: 'youth', chip: '청년', name: '청년부예배' }
   ];
   const FIELDS = ['ref', 'title', 'text', 'think'];
   function sundayOf(d) { const s = new Date(d.getFullYear(), d.getMonth(), d.getDate()); s.setDate(s.getDate() - s.getDay()); return s; }
   function ymd(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
   function fromYmd(s) { const [a, b, c] = s.split('-').map(Number); return new Date(a, b - 1, c); }
-  S.week = sundayOf(now);
-  const thisWeek = ymd(S.week);
-  // QT is kept per day of the week: entry.qtd = { "0".."6": {...} } (0 = 주일)
-  function defaultQtDay() { return ymd(S.week) === thisWeek ? now.getDay() : 0; }
-  S.qtDay = defaultQtDay();
+  function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
+  const thisWeek = ymd(sundayOf(now));
+  S.week = sundayOf(now);   // week shown on 말씀 노트
+  S.qweek = sundayOf(now);  // week shown on QT
+  S.qtDay = now.getDay();
   function migrateWord() {
     Object.values(S.word).forEach(e => { if (e && e.qt) { e.qtd = e.qtd || {}; if (!e.qtd['0']) e.qtd['0'] = e.qt; delete e.qt; } });
   }
-  function partOf(entry, kind) { return kind === 'qt' ? (entry.qtd && entry.qtd[String(S.qtDay)]) : entry[kind]; }
   function filled(p) { return !!p && FIELDS.some(f => p[f]); }
+  function weekTitle(sun) {
+    const end = addDays(sun, 6);
+    return (sun.getMonth() + 1) + '월 ' + sun.getDate() + '일 ~ ' + (end.getMonth() !== sun.getMonth() ? (end.getMonth() + 1) + '월 ' : '') + end.getDate() + '일';
+  }
 
   /* ---------- Bible reference → 대한성서공회 개역개정 page ---------- */
   const BOOKS = [
@@ -767,114 +793,176 @@ textarea, input[type="text"] {
     if (!m) return null;
     return { code: hit[1], book: hit[2], chap: +m[1], sec: m[2] ? +m[2] : 0, to: m[3] ? +m[3] : 0 };
   }
+  // text copied from the 갓피플성경 app looks like "[호2:16] 여호와께서 … [호2:17] 내가 …"
+  function parseCopiedVerses(raw) {
+    const s = (raw || '').trim();
+    const re = /\[([^\]]{2,20})\]\s*/g;
+    const toks = [];
+    let m;
+    while ((m = re.exec(s))) { const r = parseRef(m[1]); if (r && r.sec) toks.push({ r, at: m.index, end: re.lastIndex }); }
+    if (!toks.length || toks[0].at > 3) return null;
+    const verses = toks.map((t, i) => ({ r: t.r, body: s.slice(t.end, i + 1 < toks.length ? toks[i + 1].at : s.length).trim() }));
+    const a = verses[0].r, same = verses.every(v => v.r.code === a.code && v.r.chap === a.chap);
+    const secs = verses.map(v => v.r.to ? [v.r.sec, v.r.to] : [v.r.sec]).flat();
+    const lo = Math.min(...secs), hi = Math.max(...secs);
+    const ref = same
+      ? a.book + ' ' + a.chap + ':' + lo + (hi > lo ? '-' + hi : '')
+      : refLabel(a) + ' 외';
+    const text = verses.length === 1 ? verses[0].body
+      : verses.map(v => (same ? v.r.sec : refLabel(v.r)) + ' ' + v.body).join('\n');
+    return { ref, text };
+  }
+  function refLabel(r) { return r.book + ' ' + r.chap + (r.sec ? ':' + r.sec + (r.to ? '-' + r.to : '') : '장'); }
   function bibleUrl(r) {
     return 'https://www.bskorea.or.kr/bible/korbibReadpage.php?version=GAE&book=' + r.code + '&chap=' + r.chap + '&sec=' + (r.sec || 1);
   }
   const OPEN_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6 C9 4 6 4 3 5 V19 C6 18 9 18 12 20 C15 18 18 18 21 19 V5 C18 4 15 4 12 6 Z M12 6 V20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>';
+  // link + copy button under a 본문 field
   function updateRefLink(linkEl, value) {
     const r = parseRef(value);
-    if (!value || !value.trim()) { linkEl.hidden = true; return; }
+    const copy = linkEl.parentNode && linkEl.parentNode.querySelector('.copy-btn');
+    if (!value || !value.trim()) { linkEl.hidden = true; if (copy) copy.hidden = true; return; }
     linkEl.hidden = false;
     if (!r) {
       linkEl.removeAttribute('href'); linkEl.className = 'ref-link off';
       linkEl.textContent = '"요한복음 3:16"처럼 적으면 본문 바로가기가 생겨요';
+      if (copy) copy.hidden = true;
       return;
     }
     linkEl.className = 'ref-link'; linkEl.href = bibleUrl(r);
     linkEl.innerHTML = OPEN_ICON + '<span></span>';
-    linkEl.querySelector('span').textContent = '개역개정 ' + r.book + ' ' + r.chap + (r.sec ? ':' + r.sec + (r.to ? '-' + r.to : '') : '장') + ' 본문 보기';
+    linkEl.querySelector('span').textContent = '개역개정 ' + refLabel(r) + ' 보기';
+    if (copy) { copy.hidden = false; copy.dataset.ref = refLabel(r); copy.textContent = '구절 복사'; }
+  }
+  document.addEventListener('click', e => {
+    const b = e.target.closest('.copy-btn'); if (!b) return;
+    const txt = b.dataset.ref || '';
+    const ok = () => { b.textContent = '복사됨'; setTimeout(() => { b.textContent = '구절 복사'; }, 1500); };
+    try { navigator.clipboard.writeText(txt).then(ok, () => { b.textContent = txt; }); } catch (err) { b.textContent = txt; }
+  });
+
+  function fieldsHtml(k, titleLabel) {
+    return '<label class="field-label" for="' + k + '-ref">본문</label>' +
+      '<input type="text" id="' + k + '-ref" data-kind="' + k + '" data-field="ref" placeholder="예) 요한복음 15:1-8" autocomplete="off">' +
+      '<div class="ref-row"><a class="ref-link" id="' + k + '-link" target="_blank" rel="noopener" hidden></a>' +
+      '<button type="button" class="copy-btn" hidden>구절 복사</button></div>' +
+      '<label class="field-label" for="' + k + '-title">' + titleLabel + '</label>' +
+      '<input type="text" id="' + k + '-title" data-kind="' + k + '" data-field="title" placeholder="예) 참 포도나무">' +
+      '<label class="field-label" for="' + k + '-text">말씀</label>' +
+      '<textarea class="word-text" id="' + k + '-text" data-kind="' + k + '" data-field="text" placeholder="말씀을 적거나, 갓피플성경에서 복사한 구절을 붙여넣으세요. 본문 칸도 함께 채워져요."></textarea>' +
+      '<label class="field-label" for="' + k + '-think">내 생각</label>' +
+      '<textarea class="lined" id="' + k + '-think" data-kind="' + k + '" data-field="think" placeholder="말씀을 통해 느낀 점, 삶에 적용할 점을 적어 보세요."></textarea>';
+  }
+  $('wordCards').innerHTML = KINDS.map(K =>
+    '<section class="card word-card k-' + K.k + '">' +
+      '<div class="word-head"><span class="kind-chip">' + K.chip + '</span><h3>' + K.name + '</h3>' +
+      '<span class="save-state" id="st-' + K.k + '"></span></div>' + fieldsHtml(K.k, '설교 제목') +
+    '</section>').join('');
+  $('qtCard').innerHTML =
+    '<section class="card word-card k-qt">' +
+      '<div class="word-head"><span class="kind-chip">QT</span><h3 id="qtDate"></h3><span class="save-state" id="st-qt"></span></div>' +
+      '<div class="qt-days" id="qtDays" role="tablist" aria-label="QT 요일"></div>' + fieldsHtml('qt', '묵상 제목') +
+    '</section>';
+
+  function fillFields(k, part) {
+    FIELDS.forEach(f => { const el = $(k + '-' + f); if (document.activeElement !== el) el.value = (part && part[f]) || ''; });
+    updateRefLink($(k + '-link'), $(k + '-ref').value);
   }
 
-  (function buildWordCards() {
-    $('wordCards').innerHTML = KINDS.map(K =>
-      '<section class="card word-card k-' + K.k + '">' +
-        '<div class="word-head"><span class="kind-chip">' + K.chip + '</span><h3>' + K.name + '</h3>' +
-        '<span class="save-state" id="st-' + K.k + '"></span></div>' +
-        (K.k === 'qt' ? '<div class="qt-days" id="qtDays" role="tablist" aria-label="QT 요일"></div><div class="qt-date" id="qtDate"></div>' : '') +
-        '<label class="field-label" for="' + K.k + '-ref">본문</label>' +
-        '<input type="text" id="' + K.k + '-ref" data-kind="' + K.k + '" data-field="ref" placeholder="예) 요한복음 15:1-8" autocomplete="off">' +
-        '<a class="ref-link" id="' + K.k + '-link" target="_blank" rel="noopener" hidden></a>' +
-        '<label class="field-label" for="' + K.k + '-title">' + K.titleLabel + '</label>' +
-        '<input type="text" id="' + K.k + '-title" data-kind="' + K.k + '" data-field="title" placeholder="예) 참 포도나무">' +
-        '<label class="field-label" for="' + K.k + '-text">말씀</label>' +
-        '<textarea class="word-text" id="' + K.k + '-text" data-kind="' + K.k + '" data-field="text" placeholder="들은 말씀, 읽은 본문, 마음에 남은 구절을 적어 보세요."></textarea>' +
-        '<label class="field-label" for="' + K.k + '-think">내 생각</label>' +
-        '<textarea class="lined" id="' + K.k + '-think" data-kind="' + K.k + '" data-field="think" placeholder="말씀을 통해 느낀 점, 삶에 적용할 점을 적어 보세요."></textarea>' +
-      '</section>').join('');
-  })();
-
-  function qtCount(entry) { return entry && entry.qtd ? Object.values(entry.qtd).filter(filled).length : 0; }
-  function weekHas(entry) { return !!entry && (filled(entry.sun) || filled(entry.fri) || qtCount(entry) > 0); }
-  function renderQtDays(entry) {
-    let h = '';
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(S.week); d.setDate(d.getDate() + i);
-      const has = !!(entry.qtd && filled(entry.qtd[String(i)]));
-      const isToday = ymd(d) === ymd(now);
-      h += '<button type="button" role="tab" class="qt-day' + (i === S.qtDay ? ' sel' : '') + (has ? ' has' : '') + (isToday ? ' today' : '') +
-        (i === 0 ? ' sun' : i === 6 ? ' sat' : '') + '" data-qd="' + i + '" aria-selected="' + (i === S.qtDay) + '">' +
-        '<span class="w">' + WD[i] + '</span><span class="n">' + d.getDate() + '</span></button>';
-    }
-    $('qtDays').innerHTML = h;
-    const sd = new Date(S.week); sd.setDate(sd.getDate() + S.qtDay);
-    $('qtDate').textContent = (sd.getMonth() + 1) + '월 ' + sd.getDate() + '일 (' + WD[S.qtDay] + ')의 QT' + (ymd(sd) === ymd(now) ? ' · 오늘' : '');
-  }
+  // 말씀 노트
   function renderWord() {
-    const wk = ymd(S.week), end = new Date(S.week); end.setDate(end.getDate() + 6);
-    $('weekTitle').textContent = (S.week.getMonth() + 1) + '월 ' + S.week.getDate() + '일 ~ ' +
-      (end.getMonth() !== S.week.getMonth() ? (end.getMonth() + 1) + '월 ' : '') + end.getDate() + '일';
+    const wk = ymd(S.week);
+    $('weekTitle').textContent = weekTitle(S.week);
     $('weekChip').textContent = wk === thisWeek ? '이번 주' : S.week.getFullYear() + '년';
     $('wToday').hidden = wk === thisWeek;
     const entry = S.word[wk] || {};
-    KINDS.forEach(K => {
-      const part = partOf(entry, K.k) || {};
-      FIELDS.forEach(f => {
-        const el = $(K.k + '-' + f);
-        if (document.activeElement !== el) el.value = part[f] || '';
-      });
-      updateRefLink($(K.k + '-link'), $(K.k + '-ref').value);
-    });
-    renderQtDays(entry);
+    KINDS.forEach(K => fillFields(K.k, entry[K.k]));
     renderWeekList();
   }
   function renderWeekList() {
-    const keys = Object.keys(S.word).filter(k => weekHas(S.word[k])).sort().reverse();
+    const keys = Object.keys(S.word).filter(k => KINDS.some(K => filled(S.word[k][K.k]))).sort().reverse();
     const box = $('weekList'); box.innerHTML = '';
     if (!keys.length) {
       const p = document.createElement('p'); p.className = 'note-empty';
-      p.textContent = '아직 기록한 말씀이 없어요. 이번 주 주일 말씀부터 적어 보세요.';
+      p.textContent = '아직 기록한 말씀이 없어요. 이번 주 주일예배 말씀부터 적어 보세요.';
       box.appendChild(p); return;
     }
     keys.slice(0, 30).forEach(k => {
       const d = fromYmd(k), e = S.word[k];
-      const qn = qtCount(e);
-      const parts = [];
-      if (filled(e.sun)) parts.push(['주일', e.sun]);
-      if (filled(e.fri)) parts.push(['금요', e.fri]);
-      const kinds = parts.map(p => ({ chip: p[0] })).concat(qn ? [{ chip: 'QT ' + qn + '일' }] : []);
-      const first = parts.map(p => p[1].title || p[1].ref).find(Boolean) || '';
+      const ks = KINDS.filter(K => filled(e[K.k]));
+      const first = ks.map(K => e[K.k].title || e[K.k].ref).find(Boolean) || '';
       const b = document.createElement('button'); b.type = 'button'; b.className = 'note-item week-item'; b.dataset.week = k;
       b.innerHTML = '<span class="d"></span><span class="t"></span>';
       b.querySelector('.d').textContent = (d.getFullYear() !== now.getFullYear() ? String(d.getFullYear()).slice(2) + '.' : '') + (d.getMonth() + 1) + '/' + d.getDate() + ' 주간';
-      b.querySelector('.t').textContent = kinds.map(K => K.chip).join(' · ') + (first ? ' — ' + first : '');
+      b.querySelector('.t').textContent = ks.map(K => K.chip).join(' · ') + (first ? ' — ' + first : '');
       box.appendChild(b);
     });
   }
 
+  // QT
+  function renderQt() {
+    const wk = ymd(S.qweek), entry = S.word[wk] || {};
+    $('qWeekTitle').textContent = weekTitle(S.qweek);
+    $('qWeekChip').textContent = wk === thisWeek ? '이번 주' : S.qweek.getFullYear() + '년';
+    const sd = addDays(S.qweek, S.qtDay), isToday = ymd(sd) === ymd(now);
+    $('qToday').hidden = isToday;
+    let h = '';
+    for (let i = 0; i < 7; i++) {
+      const d = addDays(S.qweek, i);
+      const has = !!(entry.qtd && filled(entry.qtd[String(i)]));
+      h += '<button type="button" role="tab" class="qt-day' + (i === S.qtDay ? ' sel' : '') + (has ? ' has' : '') +
+        (ymd(d) === ymd(now) ? ' today' : '') + (i === 0 ? ' sun' : i === 6 ? ' sat' : '') + '" data-qd="' + i +
+        '" aria-selected="' + (i === S.qtDay) + '"><span class="w">' + WD[i] + '</span><span class="n">' + d.getDate() + '</span></button>';
+    }
+    $('qtDays').innerHTML = h;
+    $('qtDate').textContent = (sd.getMonth() + 1) + '월 ' + sd.getDate() + '일 (' + WD[S.qtDay] + ') QT' + (isToday ? ' · 오늘' : '');
+    fillFields('qt', entry.qtd && entry.qtd[String(S.qtDay)]);
+    renderQtList();
+  }
+  function renderQtList() {
+    const items = [];
+    Object.keys(S.word).forEach(wk => {
+      const q = S.word[wk].qtd; if (!q) return;
+      Object.keys(q).forEach(i => { if (filled(q[i])) items.push({ wk, i: +i, date: addDays(fromYmd(wk), +i), p: q[i] }); });
+    });
+    items.sort((a, b) => b.date - a.date);
+    const box = $('qtList'); box.innerHTML = '';
+    if (!items.length) {
+      const p = document.createElement('p'); p.className = 'note-empty';
+      p.textContent = '아직 기록한 QT가 없어요. 오늘 묵상한 말씀부터 적어 보세요.';
+      box.appendChild(p); return;
+    }
+    items.slice(0, 40).forEach(it => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'note-item week-item';
+      b.dataset.qwk = it.wk; b.dataset.qd = it.i;
+      b.innerHTML = '<span class="d"></span><span class="t"></span>';
+      const d = it.date;
+      b.querySelector('.d').textContent = (d.getFullYear() !== now.getFullYear() ? String(d.getFullYear()).slice(2) + '.' : '') + (d.getMonth() + 1) + '/' + d.getDate() + ' (' + WD[d.getDay()] + ')';
+      b.querySelector('.t').textContent = [it.p.ref, it.p.title].filter(Boolean).join(' — ') || (it.p.think || it.p.text || '').slice(0, 40);
+      box.appendChild(b);
+    });
+  }
+
+  // typing: one handler for both pages; saving waits for a pause
   let wordTimer = null, wordDirty = new Set();
   function flushWord() {
     if (!wordDirty.size) return;
     clearTimeout(wordTimer);
     persist();
     wordDirty.forEach(k => { $('st-' + k).textContent = '저장됨'; });
-    if (wordDirty.has('qt')) renderQtDays(S.word[ymd(S.week)] || {});
+    if (wordDirty.has('qt')) { renderQtList(); renderQtDaysOnly(); }
+    if ([...wordDirty].some(k => k !== 'qt')) renderWeekList();
     wordDirty.clear();
-    renderWeekList(); fitPager();
+    fitPager();
   }
-  $('wordCards').addEventListener('input', e => {
+  function renderQtDaysOnly() {
+    const entry = S.word[ymd(S.qweek)] || {};
+    document.querySelectorAll('#qtDays .qt-day').forEach(b => b.classList.toggle('has', !!(entry.qtd && filled(entry.qtd[b.dataset.qd]))));
+  }
+  function onFieldInput(e) {
     const el = e.target, kind = el.dataset.kind, field = el.dataset.field;
     if (!kind) return;
-    const wk = ymd(S.week);
+    const wk = ymd(kind === 'qt' ? S.qweek : S.week);
     const entry = S.word[wk] || (S.word[wk] = {});
     let holder = entry, key = kind;
     if (kind === 'qt') { holder = entry.qtd || (entry.qtd = {}); key = String(S.qtDay); }
@@ -887,53 +975,78 @@ textarea, input[type="text"] {
     wordDirty.add(kind);
     $('st-' + kind).textContent = '입력 중…';
     clearTimeout(wordTimer); wordTimer = setTimeout(flushWord, 800);
+  }
+  ['wordCards', 'qtCard'].forEach(id => {
+    $(id).addEventListener('input', onFieldInput);
+    $(id).addEventListener('focusout', flushWord);
+    // pasting a verse copied from 갓피플성경 fills 본문 and 말씀 together
+    $(id).addEventListener('paste', e => {
+      const el = e.target, kind = el.dataset && el.dataset.kind;
+      if (!kind || (el.dataset.field !== 'ref' && el.dataset.field !== 'text')) return;
+      const got = parseCopiedVerses((e.clipboardData || window.clipboardData).getData('text'));
+      if (!got) return;
+      e.preventDefault();
+      const refEl = $(kind + '-ref'), textEl = $(kind + '-text');
+      refEl.value = got.ref;
+      textEl.value = textEl.value.trim() ? textEl.value.trimEnd() + '\n' + got.text : got.text;
+      refEl.dispatchEvent(new Event('input', { bubbles: true }));
+      textEl.dispatchEvent(new Event('input', { bubbles: true }));
+      $('st-' + kind).textContent = '구절을 채웠어요';
+    });
   });
-  $('wordCards').addEventListener('focusout', flushWord);
+
   function moveWeek(step) {
     flushWord();
-    S.week = new Date(S.week); S.week.setDate(S.week.getDate() + step * 7);
-    S.qtDay = defaultQtDay();
+    S.week = addDays(S.week, step * 7);
     KINDS.forEach(K => { $('st-' + K.k).textContent = ''; });
     renderWord(); fitPager();
   }
   $('wPrev').addEventListener('click', () => moveWeek(-1));
   $('wNext').addEventListener('click', () => moveWeek(1));
-  $('wToday').addEventListener('click', () => { flushWord(); S.week = sundayOf(now); S.qtDay = defaultQtDay(); renderWord(); fitPager(); });
-  $('wordCards').addEventListener('click', e => {
-    const b = e.target.closest('[data-qd]'); if (!b) return;
-    flushWord(); S.qtDay = +b.dataset.qd; $('st-qt').textContent = ''; renderWord(); fitPager();
-  });
+  $('wToday').addEventListener('click', () => { flushWord(); S.week = sundayOf(now); renderWord(); fitPager(); });
   $('weekList').addEventListener('click', e => {
     const b = e.target.closest('[data-week]'); if (!b) return;
-    flushWord(); S.week = fromYmd(b.dataset.week); S.qtDay = defaultQtDay(); renderWord(); fitPager();
+    flushWord(); S.week = fromYmd(b.dataset.week); renderWord(); fitPager();
     $('pageWord').scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 
-  /* ---------- pager: swipe sideways between 기도 기록 and 말씀 노트 ---------- */
-  const pager = $('pager'), pages = [$('pagePray'), $('pageWord')];
+  function setQt(weekSun, day) {
+    flushWord(); S.qweek = weekSun; S.qtDay = day; $('st-qt').textContent = ''; renderQt(); fitPager();
+  }
+  $('qPrev').addEventListener('click', () => setQt(addDays(S.qweek, -7), S.qtDay));
+  $('qNext').addEventListener('click', () => setQt(addDays(S.qweek, 7), S.qtDay));
+  $('qToday').addEventListener('click', () => setQt(sundayOf(now), now.getDay()));
+  $('qtCard').addEventListener('click', e => {
+    const b = e.target.closest('.qt-day'); if (!b) return;
+    setQt(S.qweek, +b.dataset.qd);
+  });
+  $('qtList').addEventListener('click', e => {
+    const b = e.target.closest('[data-qwk]'); if (!b) return;
+    setQt(fromYmd(b.dataset.qwk), +b.dataset.qd);
+    $('pageQt').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  /* ---------- pager: swipe sideways between 기도 기록, 말씀 노트, QT ---------- */
+  const pager = $('pager'), pages = [$('pagePray'), $('pageWord'), $('pageQt')];
+  const tabs = [$('goPray'), $('goWord'), $('goQt')];
   let curPage = 0;
   function fitPager() { pager.style.height = pages[curPage].offsetHeight + 'px'; }
   function setPage(i) {
     if (i === curPage) return;
     curPage = i;
-    $('goPray').setAttribute('aria-selected', i === 0);
-    $('goWord').setAttribute('aria-selected', i === 1);
+    tabs.forEach((t, j) => t.setAttribute('aria-selected', j === i));
     document.querySelectorAll('.dots i').forEach((d, j) => d.classList.toggle('on', j === i));
     fitPager();
-    const top = $('pager').getBoundingClientRect().top + window.scrollY - 120;
+    const top = pager.getBoundingClientRect().top + window.scrollY - 120;
     if (window.scrollY > top) window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
   }
   pager.addEventListener('scroll', () => {
     const step = pages[1].offsetLeft - pages[0].offsetLeft;
-    setPage(pager.scrollLeft > step / 2 ? 1 : 0);
+    setPage(Math.max(0, Math.min(pages.length - 1, Math.round(pager.scrollLeft / step))));
   }, { passive: true });
-  function goPage(i) {
-    pager.scrollTo({ left: pages[i].offsetLeft - pages[0].offsetLeft, behavior: 'smooth' });
-  }
-  $('goPray').addEventListener('click', () => goPage(0));
-  $('goWord').addEventListener('click', () => goPage(1));
-  if (window.ResizeObserver) new ResizeObserver(fitPager).observe(pages[0]);
-  if (window.ResizeObserver) new ResizeObserver(fitPager).observe(pages[1]);
+  function goPage(i) { pager.scrollTo({ left: pages[i].offsetLeft - pages[0].offsetLeft, behavior: 'smooth' }); }
+  tabs.forEach((t, i) => t.addEventListener('click', () => goPage(i)));
+  if (window.ResizeObserver) { const ro = new ResizeObserver(fitPager); pages.forEach(p => ro.observe(p)); }
   window.addEventListener('resize', fitPager);
 
   // verse editing
@@ -941,6 +1054,12 @@ textarea, input[type="text"] {
     $('verseForm').hidden = !open; $('verseView').hidden = open; $('verseEdit').hidden = open;
     if (open) { $('verseText').value = S.verse.text; $('verseRef').value = S.verse.ref; $('verseText').focus(); }
   }
+  $('verseText').addEventListener('paste', e => {
+    const got = parseCopiedVerses((e.clipboardData || window.clipboardData).getData('text'));
+    if (!got) return;
+    e.preventDefault();
+    $('verseText').value = got.text; $('verseRef').value = got.ref;
+  });
   $('verseEdit').addEventListener('click', () => openVerse(true));
   $('verseCancel').addEventListener('click', () => openVerse(false));
   $('verseForm').addEventListener('submit', e => {
@@ -979,7 +1098,7 @@ textarea, input[type="text"] {
       return;
     }
     S.years = data.years || {}; S.verse = data.verse || { text: '', ref: '' }; S.word = data.word || {}; migrateWord();
-    persist(); renderWord(); restoreArmed = false; $('restoreGo').textContent = '불러오기';
+    persist(); renderWord(); renderQt(); restoreArmed = false; $('restoreGo').textContent = '불러오기';
     $('restoreArea').hidden = true; $('restoreText').value = '';
     $('backupMsg').textContent = '백업을 불러왔어요.';
     render();
@@ -992,6 +1111,7 @@ textarea, input[type="text"] {
   migrateWord();
   render();
   renderWord();
+  renderQt();
   fitPager();
 })();
 </script>
