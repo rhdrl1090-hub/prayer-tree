@@ -100,6 +100,7 @@ textarea, input[type="text"] {
   border: 2px solid var(--line); border-radius: 16px; padding: 10px 14px; resize: vertical;
 }
 #verseText { min-height: 90px; }
+::placeholder { color: var(--muted); opacity: .75; }
 .row-end { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
 .btn { border: 2px solid var(--line); background: var(--surface); border-radius: 999px; padding: 7px 18px; font-size: .9rem; }
 .btn.primary { background: var(--blossom-deep); border-color: var(--blossom-deep); color: var(--on-accent); }
@@ -158,13 +159,93 @@ textarea, input[type="text"] {
 .stat b { display: block; font-size: 1.5rem; font-variant-numeric: tabular-nums; }
 .stat b small { font-size: .8rem; color: var(--muted); margin-left: 2px; }
 
+/* selected day + notes */
+.day.sel { box-shadow: 0 0 0 3px var(--blossom-deep); }
+.day .has-note { position: absolute; top: 3px; right: 5px; width: 6px; height: 6px; border-radius: 50%; background: var(--leaf); }
+.day-title { font-size: 1.1rem; color: var(--blossom-core); }
+.check-btn {
+  width: 100%; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;
+  border: 2px dashed var(--blossom-deep); background: var(--surface); color: var(--blossom-core);
+  border-radius: 999px; padding: 11px 16px; font-size: 1rem; transition: transform .15s;
+}
+.check-btn svg { width: 22px; height: 22px; }
+.check-btn[aria-pressed="true"] { border-style: solid; background: var(--blossom); }
+.check-btn:active { transform: scale(.97); }
+.note-list { display: flex; flex-direction: column; margin-top: 6px; }
+.note-item { display: grid; grid-template-columns: 54px minmax(0, 1fr); gap: 10px; align-items: start; text-align: left; border: 0; background: none; padding: 10px 4px; border-bottom: 2px dotted var(--line); }
+.note-item:last-child { border-bottom: 0; }
+.note-item .d { color: var(--blossom-core); font-size: .86rem; font-variant-numeric: tabular-nums; }
+.note-item .t { min-width: 0; white-space: pre-wrap; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.note-empty { color: var(--muted); font-size: .86rem; margin: 8px 0 0; }
+
 /* memo: lined note paper */
-#memo {
-  min-height: 140px; margin-top: 8px; border: 0; border-radius: 16px; padding: 4px 14px;
+#memo, .lined {
+  min-height: 128px; margin-top: 12px; border: 0; border-radius: 16px; padding: 4px 14px;
   line-height: 32px; background: repeating-linear-gradient(var(--surface) 0 31px, var(--line) 31px 32px);
   background-attachment: local;
 }
 .memo-head { display: flex; justify-content: space-between; align-items: baseline; }
+
+/* two pages side by side: swipe or tap the switch */
+.page-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.page-switch button {
+  border: 0; border-radius: 18px; padding: 10px 8px; background: var(--surface); color: var(--muted);
+  box-shadow: 0 4px 14px var(--shadow); display: flex; align-items: center; justify-content: center; gap: 6px; font-size: .95rem;
+}
+.page-switch button svg { width: 18px; height: 18px; }
+.page-switch button[aria-selected="true"] { background: var(--ink); color: var(--bg); }
+.pager {
+  display: flex; gap: 32px; align-items: flex-start; overflow-x: auto; overflow-y: hidden;
+  scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain;
+  margin-inline: -16px; padding-inline: 16px; scroll-padding-inline: 16px;
+  transition: height .25s ease;
+}
+.pager::-webkit-scrollbar { display: none; }
+.page { flex: 0 0 100%; min-width: 0; scroll-snap-align: start; scroll-snap-stop: always; display: flex; flex-direction: column; gap: 14px; }
+.dots { display: flex; justify-content: center; gap: 6px; margin-top: -4px; }
+.dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--line); transition: width .2s, background .2s; }
+.dots i.on { width: 20px; border-radius: 999px; background: var(--blossom-deep); }
+
+/* sermon / QT notes */
+.week-head { text-align: center; min-width: 0; }
+.week-head h2 { font-size: 1.12rem; }
+.week-chip { display: inline-block; font-size: .72rem; padding: 2px 10px; border-radius: 999px; background: var(--leaf-soft); color: var(--leaf); margin-top: 2px; }
+.word-card { display: flex; flex-direction: column; gap: 6px; }
+.word-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.word-head h3 { margin: 0; font-size: 1.08rem; font-weight: 400; flex: 1; min-width: 0; }
+.kind-chip { flex: none; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-size: .8rem; }
+.k-sun .kind-chip { background: var(--blossom-soft); color: var(--blossom-core); }
+.k-fri .kind-chip { background: var(--sky); color: var(--sat); }
+.k-qt .kind-chip { background: var(--leaf-soft); color: var(--leaf); }
+.field-label { font-size: .78rem; color: var(--muted); margin-top: 4px; }
+.word-text { min-height: 96px; background: var(--bg); border-color: transparent; }
+.word-card .lined { margin-top: 0; box-shadow: inset 0 0 0 2px var(--line); }
+.word-card input[type="text"] { background: var(--bg); border-color: transparent; }
+.filled-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--leaf); flex: none; }
+.week-item { grid-template-columns: 96px minmax(0, 1fr); }
+.qt-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin-bottom: 2px; }
+.qt-day {
+  position: relative; border: 2px solid transparent; background: var(--leaf-soft); border-radius: 16px;
+  padding: 6px 0 5px; display: flex; flex-direction: column; align-items: center; gap: 1px; line-height: 1.15;
+}
+.qt-day .w { font-size: .7rem; color: var(--muted); }
+.qt-day .n { font-size: .95rem; font-variant-numeric: tabular-nums; }
+.qt-day.sun .w { color: var(--sun-day); }
+.qt-day.sat .w { color: var(--sat); }
+.qt-day.today { border-color: var(--leaf); border-style: dashed; }
+.qt-day.sel { background: var(--leaf); color: var(--on-accent); border-style: solid; border-color: var(--leaf); }
+.qt-day.sel .w { color: var(--on-accent); }
+.qt-day.has::after { content: ""; position: absolute; top: 4px; right: 5px; width: 6px; height: 6px; border-radius: 50%; background: var(--blossom-deep); }
+.qt-date { font-size: .82rem; color: var(--leaf); margin-top: 4px; }
+.ref-link {
+  align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; margin-top: 2px;
+  padding: 6px 12px; border-radius: 999px; background: var(--blossom-soft); color: var(--blossom-core);
+  font-size: .82rem; text-decoration: none; max-width: 100%;
+}
+.ref-link svg { width: 16px; height: 16px; flex: none; }
+.ref-link span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ref-link.off { background: none; color: var(--muted); padding: 2px 2px; font-size: .76rem; }
+.verse .ref-link { background: var(--surface); margin-top: 10px; position: relative; }
 
 /* year view */
 .months { display: flex; flex-direction: column; gap: 4px; }
@@ -196,6 +277,17 @@ textarea, input[type="text"] {
     </div>
     <span class="save-state" id="saveState"></span>
   </header>
+
+  <div class="page-switch" role="tablist" aria-label="페이지">
+    <button type="button" role="tab" id="goPray" aria-selected="true" aria-controls="pagePray">
+      <svg viewBox="-10 -10 20 20" aria-hidden="true" id="goPrayIcon"></svg>기도 기록</button>
+    <button type="button" role="tab" id="goWord" aria-selected="false" aria-controls="pageWord">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6 C9 4 6 4 3 5 V19 C6 18 9 18 12 20 C15 18 18 18 21 19 V5 C18 4 15 4 12 6 Z M12 6 V20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>말씀 노트</button>
+  </div>
+  <div class="dots" aria-hidden="true"><i class="on"></i><i></i></div>
+
+  <div class="pager" id="pager">
+  <div class="page" id="pagePray" role="tabpanel" aria-label="기도 기록">
 
   <section class="card verse" aria-label="오늘의 말씀">
     <div class="verse-head">
@@ -239,14 +331,19 @@ textarea, input[type="text"] {
     </section>
     <section class="card">
       <div class="cal" id="cal"></div>
-      <p class="hint">날짜를 누르면 기도한 날로 체크되고 나무에 벚꽃이 한 송이 피어요. 다시 누르면 해제돼요.</p>
+      <p class="hint">날짜를 고른 뒤 아래에서 기도 체크와 그날의 메모를 남겨요. 체크하면 나무에 벚꽃이 한 송이 피어요.</p>
     </section>
-    <section class="card">
+    <section class="card day-panel" id="dayPanel">
       <div class="memo-head">
-        <span class="label" id="memoLabel">이달의 기도 메모</span>
+        <span class="day-title" id="selTitle"></span>
         <span class="save-state" id="memoState"></span>
       </div>
-      <textarea id="memo" placeholder="이번 달 기도 제목, 응답받은 일, 감사한 일을 적어 보세요."></textarea>
+      <button type="button" class="check-btn" id="checkBtn" aria-pressed="false"></button>
+      <textarea id="memo" placeholder="오늘의 기도 제목, 응답받은 일, 감사한 일을 적어 보세요."></textarea>
+    </section>
+    <section class="card">
+      <span class="label" id="noteListLabel">이달의 기도 메모</span>
+      <div class="note-list" id="noteList"></div>
     </section>
   </div>
 
@@ -279,6 +376,26 @@ textarea, input[type="text"] {
     </section>
   </div>
 
+  </div><!-- /pagePray -->
+
+  <div class="page" id="pageWord" role="tabpanel" aria-label="말씀 노트">
+    <div class="nav">
+      <button class="nav-btn" id="wPrev" type="button" aria-label="지난 주"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 L8 12 L15 19" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <div class="week-head">
+        <h2 id="weekTitle"></h2>
+        <span class="week-chip" id="weekChip"></span>
+        <button class="today-btn" id="wToday" type="button">이번 주로</button>
+      </div>
+      <button class="nav-btn" id="wNext" type="button" aria-label="다음 주"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5 L16 12 L9 19" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    </div>
+    <div id="wordCards" style="display:flex;flex-direction:column;gap:14px"></div>
+    <section class="card">
+      <span class="label">말씀을 기록한 주</span>
+      <div class="note-list" id="weekList"></div>
+    </section>
+  </div><!-- /pageWord -->
+  </div><!-- /pager -->
+
   <p class="note" id="storeNote"></p>
 </div>
 
@@ -289,9 +406,13 @@ textarea, input[type="text"] {
     view: 'month',
     y: now.getFullYear(),
     m: now.getMonth() + 1,
-    years: {},          // { "2026": { days: { "10": [1,3] }, memo: { "10": "..." } } }
-    verse: { text: '', ref: '' }
+    years: {},          // { "2026": { days: { "10": [1,3] }, notes: { "10": { "3": "..." } }, memo: {} (old monthly memos) } }
+    verse: { text: '', ref: '' },
+    sel: now.getDate(),  // selected day in the month view
+    word: {},            // { "2026-10-18" (week's Sunday): { sun|fri|qt: { ref, title, text, think } } }
+    week: null           // Sunday (Date) of the week shown on the sermon page
   };
+  function defaultSel() { return S.y === now.getFullYear() && S.m === now.getMonth() + 1 ? now.getDate() : 1; }
   const $ = id => document.getElementById(id);
   const LS_KEY = 'prayer-tree-v1';
 
@@ -300,13 +421,13 @@ textarea, input[type="text"] {
   function lsLoad() {
     try {
       const raw = localStorage.getItem(LS_KEY);
-      if (raw) { const d = JSON.parse(raw); S.years = d.years || {}; S.verse = d.verse || S.verse; }
+      if (raw) { const d = JSON.parse(raw); S.years = d.years || {}; S.verse = d.verse || S.verse; S.word = d.word || {}; }
     } catch (e) { storageOk = false; }
   }
   function setSaving(t) { $('saveState').textContent = t; }
   function persist() {
     try {
-      localStorage.setItem(LS_KEY, JSON.stringify({ years: S.years, verse: S.verse }));
+      localStorage.setItem(LS_KEY, JSON.stringify({ years: S.years, verse: S.verse, word: S.word }));
       setSaving('이 휴대폰에 저장됨');
     } catch (e) {
       storageOk = false;
@@ -319,11 +440,18 @@ textarea, input[type="text"] {
   /* ---------- data helpers ---------- */
   function yearDoc(y) {
     y = String(y);
-    if (!S.years[y]) S.years[y] = { days: {}, memo: {} };
-    return S.years[y];
+    if (!S.years[y]) S.years[y] = { days: {}, notes: {}, memo: {} };
+    const doc = S.years[y];
+    if (!doc.days) doc.days = {};
+    if (!doc.notes) doc.notes = {};
+    if (!doc.memo) doc.memo = {};
+    return doc;
   }
-  function monthDays(y, m) { const d = S.years[String(y)]; return (d && d.days[String(m)]) || []; }
-  function monthMemo(y, m) { const d = S.years[String(y)]; return (d && d.memo[String(m)]) || ''; }
+  function monthDays(y, m) { const d = S.years[String(y)]; return (d && d.days && d.days[String(m)]) || []; }
+  function monthMemo(y, m) { const d = S.years[String(y)]; return (d && d.memo && d.memo[String(m)]) || ''; }
+  function monthNotes(y, m) { const d = S.years[String(y)]; return (d && d.notes && d.notes[String(m)]) || {}; }
+  function dayNote(y, m, day) { return monthNotes(y, m)[String(day)] || ''; }
+  const WD = ['일', '월', '화', '수', '목', '금', '토'];
   function yearTotal(y) { const d = S.years[String(y)]; if (!d) return 0; return Object.values(d.days).reduce((a, v) => a + v.length, 0); }
   function allTotal() { return Object.keys(S.years).reduce((a, y) => a + yearTotal(y), 0); }
   function daysIn(y, m) { return new Date(y, m, 0).getDate(); }
@@ -407,7 +535,13 @@ textarea, input[type="text"] {
     $('verseView').innerHTML = '';
     if (v.text) {
       const q = document.createElement('blockquote'); q.textContent = v.text; $('verseView').appendChild(q);
-      if (v.ref) { const c = document.createElement('cite'); c.textContent = v.ref; $('verseView').appendChild(c); }
+      if (v.ref) {
+        const c = document.createElement('cite'); c.textContent = v.ref; $('verseView').appendChild(c);
+        if (parseRef(v.ref)) {
+          const a = document.createElement('a'); a.target = '_blank'; a.rel = 'noopener';
+          updateRefLink(a, v.ref); $('verseView').appendChild(document.createElement('br')); $('verseView').appendChild(a);
+        }
+      }
       $('verseEdit').textContent = '고치기';
     } else {
       const p = document.createElement('p'); p.className = 'empty'; p.style.margin = '8px 0 0';
@@ -429,6 +563,7 @@ textarea, input[type="text"] {
     const set = new Set(days);
     const first = new Date(S.y, S.m - 1, 1).getDay();
     const n = daysIn(S.y, S.m);
+    S.sel = Math.min(Math.max(S.sel || 1, 1), n);
     const isThisMonth = S.y === now.getFullYear() && S.m === now.getMonth() + 1;
     let h = ['일', '월', '화', '수', '목', '금', '토'].map((d, i) => '<div class="dow' + (i === 0 ? ' sun' : i === 6 ? ' sat' : '') + '">' + d + '</div>').join('');
     for (let i = 0; i < first; i++) h += '<div></div>';
@@ -436,14 +571,50 @@ textarea, input[type="text"] {
       const on = set.has(d), wd = (first + d - 1) % 7;
       const cls = 'day' + (wd === 0 ? ' sun' : wd === 6 ? ' sat' : '') + (on ? ' on' : '') + (on && d === justToggled ? ' pop' : '') +
         (isThisMonth && d === now.getDate() ? ' today' : '');
-      h += '<button type="button" class="' + cls + '" data-day="' + d + '" aria-pressed="' + on + '" aria-label="' + S.m + '월 ' + d + '일' + (on ? ' 기도함' : '') + '">' +
-        '<span>' + d + '</span>' + (on ? LEAF_ICON : '<span class="dot"></span>') + '</button>';
+      const note = !!dayNote(S.y, S.m, d);
+      h += '<button type="button" class="' + cls + (d === S.sel ? ' sel' : '') + '" data-day="' + d + '" aria-current="' + (d === S.sel ? 'date' : 'false') + '" aria-label="' + S.m + '월 ' + d + '일' + (on ? ', 기도함' : '') + (note ? ', 메모 있음' : '') + '">' +
+        (note ? '<span class="has-note"></span>' : '') + '<span>' + d + '</span>' + (on ? LEAF_ICON : '<span class="dot"></span>') + '</button>';
     }
     $('cal').innerHTML = h;
     justToggled = 0;
     drawTree(days.length);
-    $('memoLabel').textContent = S.m + '월의 기도 메모';
-    if (document.activeElement !== $('memo')) $('memo').value = monthMemo(S.y, S.m);
+    renderDayPanel(set);
+    renderNoteList();
+  }
+
+  const CHECK_ICON = '<svg viewBox="-10 -10 20 20" aria-hidden="true">' + blossom(0, 0, 0, 0.95, false).replace('class="bloom"', '') + '</svg>';
+  function renderDayPanel(set) {
+    const d = S.sel, wd = WD[new Date(S.y, S.m - 1, d).getDay()];
+    const isToday = S.y === now.getFullYear() && S.m === now.getMonth() + 1 && d === now.getDate();
+    $('selTitle').textContent = S.m + '월 ' + d + '일 (' + wd + ')' + (isToday ? ' · 오늘' : '');
+    const on = set.has(d);
+    $('checkBtn').setAttribute('aria-pressed', on);
+    $('checkBtn').innerHTML = on ? CHECK_ICON + '<span>기도했어요</span>' : '<span>이날 기도했어요 체크하기</span>';
+    if (document.activeElement !== $('memo')) $('memo').value = dayNote(S.y, S.m, d);
+  }
+
+  function renderNoteList() {
+    const notes = monthNotes(S.y, S.m);
+    const keys = Object.keys(notes).map(Number).filter(k => notes[k]).sort((a, b) => a - b);
+    $('noteListLabel').textContent = S.m + '월의 기도 메모 모아보기';
+    const box = $('noteList'); box.innerHTML = '';
+    const old = monthMemo(S.y, S.m);
+    if (old) {
+      const it = document.createElement('div'); it.className = 'note-item';
+      it.innerHTML = '<span class="d">이달 메모</span><span class="t"></span>';
+      it.querySelector('.t').textContent = old; box.appendChild(it);
+    }
+    keys.forEach(k => {
+      const it = document.createElement('button'); it.type = 'button'; it.className = 'note-item'; it.dataset.day = k;
+      it.innerHTML = '<span class="d">' + S.m + '/' + k + ' (' + WD[new Date(S.y, S.m - 1, k).getDay()] + ')</span><span class="t"></span>';
+      it.querySelector('.t').textContent = notes[k];
+      box.appendChild(it);
+    });
+    if (!keys.length && !old) {
+      const p = document.createElement('p'); p.className = 'note-empty';
+      p.textContent = '아직 이달에 남긴 메모가 없어요. 날짜를 고르고 그날의 기도를 적어 보세요.';
+      box.appendChild(p);
+    }
   }
 
   function renderYear() {
@@ -452,7 +623,7 @@ textarea, input[type="text"] {
       const c = monthDays(S.y, m).length, total = daysIn(S.y, m);
       h += '<button type="button" class="mrow" data-month="' + m + '"><span class="m">' + m + '월</span>' +
         '<span class="branch"><i style="width:' + (c / total * 100) + '%"></i></span>' +
-        '<span class="n">' + c + '일' + (monthMemo(S.y, m) ? '<span class="memo-flag" title="메모 있음"></span>' : '') + '</span></button>';
+        '<span class="n">' + c + '일' + (monthMemo(S.y, m) || Object.values(monthNotes(S.y, m)).some(Boolean) ? '<span class="memo-flag" title="메모 있음"></span>' : '') + '</span></button>';
     }
     $('months').innerHTML = h;
     const ys = new Set(Object.keys(S.years).filter(y => yearTotal(y) > 0));
@@ -476,28 +647,50 @@ textarea, input[type="text"] {
   }
 
   /* ---------- events ---------- */
+  function selectDay(d) {
+    flushMemo();
+    S.sel = d; $('memoState').textContent = '';
+    render();
+  }
   $('cal').addEventListener('click', e => {
     const b = e.target.closest('[data-day]'); if (!b) return;
-    const d = +b.dataset.day, doc = yearDoc(S.y), key = String(S.m);
-    justToggled = d;
+    selectDay(+b.dataset.day);
+  });
+  $('noteList').addEventListener('click', e => {
+    const b = e.target.closest('[data-day]'); if (!b) return;
+    selectDay(+b.dataset.day);
+    $('dayPanel').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+  $('checkBtn').addEventListener('click', () => {
+    const d = S.sel, doc = yearDoc(S.y), key = String(S.m);
     const arr = doc.days[key] ? [...doc.days[key]] : [];
     const i = arr.indexOf(d);
-    if (i >= 0) arr.splice(i, 1); else arr.push(d);
+    if (i >= 0) arr.splice(i, 1); else { arr.push(d); justToggled = d; }
     arr.sort((a, b) => a - b);
     if (arr.length) doc.days[key] = arr; else delete doc.days[key];
-    render(); persist('y' + S.y);
+    render(); persist();
   });
 
-  let memoTimer = null, memoTarget = null;
+  // each keystroke updates the selected day's note; saving waits for a pause
+  let memoTimer = null, memoDirty = false;
   function flushMemo() {
-    if (!memoTarget) return;
-    const t = memoTarget; memoTarget = null; clearTimeout(memoTimer);
-    persist('y' + t.y).then(() => { $('memoState').textContent = '저장됨'; });
+    if (!memoDirty) return;
+    memoDirty = false; clearTimeout(memoTimer);
+    persist(); $('memoState').textContent = '저장됨';
+    renderNoteList();
+    // refresh the little note dots without stealing focus from the textarea
+    document.querySelectorAll('#cal .day').forEach(b => {
+      const has = !!dayNote(S.y, S.m, +b.dataset.day), dot = b.querySelector('.has-note');
+      if (has && !dot) b.insertAdjacentHTML('afterbegin', '<span class="has-note"></span>');
+      if (!has && dot) dot.remove();
+    });
   }
   $('memo').addEventListener('input', () => {
-    const doc = yearDoc(S.y), v = $('memo').value;
-    if (v) doc.memo[String(S.m)] = v; else delete doc.memo[String(S.m)];
-    memoTarget = { y: S.y };
+    const doc = yearDoc(S.y), key = String(S.m), v = $('memo').value;
+    if (!doc.notes[key]) doc.notes[key] = {};
+    if (v.trim()) doc.notes[key][String(S.sel)] = v; else delete doc.notes[key][String(S.sel)];
+    if (!Object.keys(doc.notes[key]).length) delete doc.notes[key];
+    memoDirty = true;
     $('memoState').textContent = '입력 중…';
     clearTimeout(memoTimer); memoTimer = setTimeout(flushMemo, 800);
   });
@@ -508,35 +701,240 @@ textarea, input[type="text"] {
     if (S.view === 'month') {
       S.m += step;
       if (S.m < 1) { S.m = 12; S.y--; } else if (S.m > 12) { S.m = 1; S.y++; }
+      S.sel = defaultSel();
     } else S.y += step;
     $('memoState').textContent = '';
     render();
   }
   $('prev').addEventListener('click', () => move(-1));
   $('next').addEventListener('click', () => move(1));
-  $('goToday').addEventListener('click', () => { flushMemo(); S.y = now.getFullYear(); S.m = now.getMonth() + 1; render(); });
+  $('goToday').addEventListener('click', () => { flushMemo(); S.y = now.getFullYear(); S.m = now.getMonth() + 1; S.sel = now.getDate(); render(); });
   $('tabMonth').addEventListener('click', () => { S.view = 'month'; render(); });
   $('tabYear').addEventListener('click', () => { flushMemo(); S.view = 'year'; render(); });
   $('months').addEventListener('click', e => {
     const b = e.target.closest('[data-month]'); if (!b) return;
-    S.m = +b.dataset.month; S.view = 'month'; render();
+    S.m = +b.dataset.month; S.sel = defaultSel(); S.view = 'month'; render();
   });
   $('years').addEventListener('click', e => {
     const b = e.target.closest('[data-year]'); if (!b) return;
     S.y = +b.dataset.year; render();
   });
 
-  // swipe left/right to move months
-  // (a clear sideways swipe only — taps on any day, weekends included, never count as a swipe)
-  let tx = null, ty = 0;
-  document.addEventListener('touchstart', e => {
-    tx = e.target.closest('textarea,input,button') ? null : e.touches[0].clientX; ty = e.touches[0].clientY;
-  }, { passive: true });
-  document.addEventListener('touchend', e => {
-    if (tx === null) return;
-    const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty; tx = null;
-    if (Math.abs(dx) > 80 && Math.abs(dx) > Math.abs(dy) * 2) move(dx < 0 ? 1 : -1);
+  /* ---------- sermon / QT notes, one sheet per week (Sunday to Saturday) ---------- */
+  const KINDS = [
+    { k: 'sun', chip: '주일', name: '주일 말씀', titleLabel: '설교 제목' },
+    { k: 'fri', chip: '금요', name: '금요예배 말씀', titleLabel: '설교 제목' },
+    { k: 'qt',  chip: 'QT',   name: '매일 QT', titleLabel: '묵상 제목' }
+  ];
+  const FIELDS = ['ref', 'title', 'text', 'think'];
+  function sundayOf(d) { const s = new Date(d.getFullYear(), d.getMonth(), d.getDate()); s.setDate(s.getDate() - s.getDay()); return s; }
+  function ymd(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function fromYmd(s) { const [a, b, c] = s.split('-').map(Number); return new Date(a, b - 1, c); }
+  S.week = sundayOf(now);
+  const thisWeek = ymd(S.week);
+  // QT is kept per day of the week: entry.qtd = { "0".."6": {...} } (0 = 주일)
+  function defaultQtDay() { return ymd(S.week) === thisWeek ? now.getDay() : 0; }
+  S.qtDay = defaultQtDay();
+  function migrateWord() {
+    Object.values(S.word).forEach(e => { if (e && e.qt) { e.qtd = e.qtd || {}; if (!e.qtd['0']) e.qtd['0'] = e.qt; delete e.qt; } });
+  }
+  function partOf(entry, kind) { return kind === 'qt' ? (entry.qtd && entry.qtd[String(S.qtDay)]) : entry[kind]; }
+  function filled(p) { return !!p && FIELDS.some(f => p[f]); }
+
+  /* ---------- Bible reference → 대한성서공회 개역개정 page ---------- */
+  const BOOKS = [
+    ['gen', '창세기', '창'], ['exo', '출애굽기', '출'], ['lev', '레위기', '레'], ['num', '민수기', '민'], ['deu', '신명기', '신'],
+    ['jos', '여호수아', '수'], ['jdg', '사사기', '삿'], ['rut', '룻기', '룻'], ['1sa', '사무엘상', '삼상'], ['2sa', '사무엘하', '삼하'],
+    ['1ki', '열왕기상', '왕상'], ['2ki', '열왕기하', '왕하'], ['1ch', '역대상', '대상'], ['2ch', '역대하', '대하'], ['ezr', '에스라', '스'],
+    ['neh', '느헤미야', '느'], ['est', '에스더', '에'], ['job', '욥기', '욥'], ['psa', '시편', '시'], ['pro', '잠언', '잠'],
+    ['ecc', '전도서', '전'], ['sng', '아가', '아'], ['isa', '이사야', '사'], ['jer', '예레미야', '렘'], ['lam', '예레미야애가', '애', '애가'],
+    ['ezk', '에스겔', '겔'], ['dan', '다니엘', '단'], ['hos', '호세아', '호'], ['jol', '요엘', '욜'], ['amo', '아모스', '암'],
+    ['oba', '오바댜', '옵'], ['jnh', '요나', '욘'], ['mic', '미가', '미'], ['nam', '나훔', '나'], ['hab', '하박국', '합'],
+    ['zep', '스바냐', '습'], ['hag', '학개', '학'], ['zec', '스가랴', '슥'], ['mal', '말라기', '말'],
+    ['mat', '마태복음', '마'], ['mrk', '마가복음', '막'], ['luk', '누가복음', '눅'], ['jhn', '요한복음', '요'], ['act', '사도행전', '행'],
+    ['rom', '로마서', '롬'], ['1co', '고린도전서', '고전'], ['2co', '고린도후서', '고후'], ['gal', '갈라디아서', '갈'], ['eph', '에베소서', '엡'],
+    ['php', '빌립보서', '빌'], ['col', '골로새서', '골'], ['1th', '데살로니가전서', '살전'], ['2th', '데살로니가후서', '살후'],
+    ['1ti', '디모데전서', '딤전'], ['2ti', '디모데후서', '딤후'], ['tit', '디도서', '딛'], ['phm', '빌레몬서', '몬'], ['heb', '히브리서', '히'],
+    ['jas', '야고보서', '약'], ['1pe', '베드로전서', '벧전'], ['2pe', '베드로후서', '벧후'], ['1jn', '요한일서', '요일', '요한1서'],
+    ['2jn', '요한이서', '요이', '요한2서'], ['3jn', '요한삼서', '요삼', '요한3서'], ['jud', '유다서', '유'], ['rev', '요한계시록', '계', '계시록']
+  ];
+  const BOOK_NAMES = BOOKS.flatMap(b => b.slice(1).map(n => [n, b[0], b[1]])).sort((a, b) => b[0].length - a[0].length);
+  function parseRef(s) {
+    const t = (s || '').replace(/\s+/g, '');
+    const hit = BOOK_NAMES.find(([n]) => t.startsWith(n));
+    if (!hit) return null;
+    const m = t.slice(hit[0].length).match(/^(\d{1,3})(?:장|편)?(?:[:.,]?(\d{1,3})절?)?(?:[-~](\d{1,3}))?/);
+    if (!m) return null;
+    return { code: hit[1], book: hit[2], chap: +m[1], sec: m[2] ? +m[2] : 0, to: m[3] ? +m[3] : 0 };
+  }
+  function bibleUrl(r) {
+    return 'https://www.bskorea.or.kr/bible/korbibReadpage.php?version=GAE&book=' + r.code + '&chap=' + r.chap + '&sec=' + (r.sec || 1);
+  }
+  const OPEN_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6 C9 4 6 4 3 5 V19 C6 18 9 18 12 20 C15 18 18 18 21 19 V5 C18 4 15 4 12 6 Z M12 6 V20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>';
+  function updateRefLink(linkEl, value) {
+    const r = parseRef(value);
+    if (!value || !value.trim()) { linkEl.hidden = true; return; }
+    linkEl.hidden = false;
+    if (!r) {
+      linkEl.removeAttribute('href'); linkEl.className = 'ref-link off';
+      linkEl.textContent = '"요한복음 3:16"처럼 적으면 본문 바로가기가 생겨요';
+      return;
+    }
+    linkEl.className = 'ref-link'; linkEl.href = bibleUrl(r);
+    linkEl.innerHTML = OPEN_ICON + '<span></span>';
+    linkEl.querySelector('span').textContent = '개역개정 ' + r.book + ' ' + r.chap + (r.sec ? ':' + r.sec + (r.to ? '-' + r.to : '') : '장') + ' 본문 보기';
+  }
+
+  (function buildWordCards() {
+    $('wordCards').innerHTML = KINDS.map(K =>
+      '<section class="card word-card k-' + K.k + '">' +
+        '<div class="word-head"><span class="kind-chip">' + K.chip + '</span><h3>' + K.name + '</h3>' +
+        '<span class="save-state" id="st-' + K.k + '"></span></div>' +
+        (K.k === 'qt' ? '<div class="qt-days" id="qtDays" role="tablist" aria-label="QT 요일"></div><div class="qt-date" id="qtDate"></div>' : '') +
+        '<label class="field-label" for="' + K.k + '-ref">본문</label>' +
+        '<input type="text" id="' + K.k + '-ref" data-kind="' + K.k + '" data-field="ref" placeholder="예) 요한복음 15:1-8" autocomplete="off">' +
+        '<a class="ref-link" id="' + K.k + '-link" target="_blank" rel="noopener" hidden></a>' +
+        '<label class="field-label" for="' + K.k + '-title">' + K.titleLabel + '</label>' +
+        '<input type="text" id="' + K.k + '-title" data-kind="' + K.k + '" data-field="title" placeholder="예) 참 포도나무">' +
+        '<label class="field-label" for="' + K.k + '-text">말씀</label>' +
+        '<textarea class="word-text" id="' + K.k + '-text" data-kind="' + K.k + '" data-field="text" placeholder="들은 말씀, 읽은 본문, 마음에 남은 구절을 적어 보세요."></textarea>' +
+        '<label class="field-label" for="' + K.k + '-think">내 생각</label>' +
+        '<textarea class="lined" id="' + K.k + '-think" data-kind="' + K.k + '" data-field="think" placeholder="말씀을 통해 느낀 점, 삶에 적용할 점을 적어 보세요."></textarea>' +
+      '</section>').join('');
+  })();
+
+  function qtCount(entry) { return entry && entry.qtd ? Object.values(entry.qtd).filter(filled).length : 0; }
+  function weekHas(entry) { return !!entry && (filled(entry.sun) || filled(entry.fri) || qtCount(entry) > 0); }
+  function renderQtDays(entry) {
+    let h = '';
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(S.week); d.setDate(d.getDate() + i);
+      const has = !!(entry.qtd && filled(entry.qtd[String(i)]));
+      const isToday = ymd(d) === ymd(now);
+      h += '<button type="button" role="tab" class="qt-day' + (i === S.qtDay ? ' sel' : '') + (has ? ' has' : '') + (isToday ? ' today' : '') +
+        (i === 0 ? ' sun' : i === 6 ? ' sat' : '') + '" data-qd="' + i + '" aria-selected="' + (i === S.qtDay) + '">' +
+        '<span class="w">' + WD[i] + '</span><span class="n">' + d.getDate() + '</span></button>';
+    }
+    $('qtDays').innerHTML = h;
+    const sd = new Date(S.week); sd.setDate(sd.getDate() + S.qtDay);
+    $('qtDate').textContent = (sd.getMonth() + 1) + '월 ' + sd.getDate() + '일 (' + WD[S.qtDay] + ')의 QT' + (ymd(sd) === ymd(now) ? ' · 오늘' : '');
+  }
+  function renderWord() {
+    const wk = ymd(S.week), end = new Date(S.week); end.setDate(end.getDate() + 6);
+    $('weekTitle').textContent = (S.week.getMonth() + 1) + '월 ' + S.week.getDate() + '일 ~ ' +
+      (end.getMonth() !== S.week.getMonth() ? (end.getMonth() + 1) + '월 ' : '') + end.getDate() + '일';
+    $('weekChip').textContent = wk === thisWeek ? '이번 주' : S.week.getFullYear() + '년';
+    $('wToday').hidden = wk === thisWeek;
+    const entry = S.word[wk] || {};
+    KINDS.forEach(K => {
+      const part = partOf(entry, K.k) || {};
+      FIELDS.forEach(f => {
+        const el = $(K.k + '-' + f);
+        if (document.activeElement !== el) el.value = part[f] || '';
+      });
+      updateRefLink($(K.k + '-link'), $(K.k + '-ref').value);
+    });
+    renderQtDays(entry);
+    renderWeekList();
+  }
+  function renderWeekList() {
+    const keys = Object.keys(S.word).filter(k => weekHas(S.word[k])).sort().reverse();
+    const box = $('weekList'); box.innerHTML = '';
+    if (!keys.length) {
+      const p = document.createElement('p'); p.className = 'note-empty';
+      p.textContent = '아직 기록한 말씀이 없어요. 이번 주 주일 말씀부터 적어 보세요.';
+      box.appendChild(p); return;
+    }
+    keys.slice(0, 30).forEach(k => {
+      const d = fromYmd(k), e = S.word[k];
+      const qn = qtCount(e);
+      const parts = [];
+      if (filled(e.sun)) parts.push(['주일', e.sun]);
+      if (filled(e.fri)) parts.push(['금요', e.fri]);
+      const kinds = parts.map(p => ({ chip: p[0] })).concat(qn ? [{ chip: 'QT ' + qn + '일' }] : []);
+      const first = parts.map(p => p[1].title || p[1].ref).find(Boolean) || '';
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'note-item week-item'; b.dataset.week = k;
+      b.innerHTML = '<span class="d"></span><span class="t"></span>';
+      b.querySelector('.d').textContent = (d.getFullYear() !== now.getFullYear() ? String(d.getFullYear()).slice(2) + '.' : '') + (d.getMonth() + 1) + '/' + d.getDate() + ' 주간';
+      b.querySelector('.t').textContent = kinds.map(K => K.chip).join(' · ') + (first ? ' — ' + first : '');
+      box.appendChild(b);
+    });
+  }
+
+  let wordTimer = null, wordDirty = new Set();
+  function flushWord() {
+    if (!wordDirty.size) return;
+    clearTimeout(wordTimer);
+    persist();
+    wordDirty.forEach(k => { $('st-' + k).textContent = '저장됨'; });
+    if (wordDirty.has('qt')) renderQtDays(S.word[ymd(S.week)] || {});
+    wordDirty.clear();
+    renderWeekList(); fitPager();
+  }
+  $('wordCards').addEventListener('input', e => {
+    const el = e.target, kind = el.dataset.kind, field = el.dataset.field;
+    if (!kind) return;
+    const wk = ymd(S.week);
+    const entry = S.word[wk] || (S.word[wk] = {});
+    let holder = entry, key = kind;
+    if (kind === 'qt') { holder = entry.qtd || (entry.qtd = {}); key = String(S.qtDay); }
+    const part = holder[key] || (holder[key] = {});
+    if (el.value.trim()) part[field] = el.value; else delete part[field];
+    if (!Object.keys(part).length) delete holder[key];
+    if (entry.qtd && !Object.keys(entry.qtd).length) delete entry.qtd;
+    if (!Object.keys(entry).length) delete S.word[wk];
+    if (field === 'ref') updateRefLink($(kind + '-link'), el.value);
+    wordDirty.add(kind);
+    $('st-' + kind).textContent = '입력 중…';
+    clearTimeout(wordTimer); wordTimer = setTimeout(flushWord, 800);
   });
+  $('wordCards').addEventListener('focusout', flushWord);
+  function moveWeek(step) {
+    flushWord();
+    S.week = new Date(S.week); S.week.setDate(S.week.getDate() + step * 7);
+    S.qtDay = defaultQtDay();
+    KINDS.forEach(K => { $('st-' + K.k).textContent = ''; });
+    renderWord(); fitPager();
+  }
+  $('wPrev').addEventListener('click', () => moveWeek(-1));
+  $('wNext').addEventListener('click', () => moveWeek(1));
+  $('wToday').addEventListener('click', () => { flushWord(); S.week = sundayOf(now); S.qtDay = defaultQtDay(); renderWord(); fitPager(); });
+  $('wordCards').addEventListener('click', e => {
+    const b = e.target.closest('[data-qd]'); if (!b) return;
+    flushWord(); S.qtDay = +b.dataset.qd; $('st-qt').textContent = ''; renderWord(); fitPager();
+  });
+  $('weekList').addEventListener('click', e => {
+    const b = e.target.closest('[data-week]'); if (!b) return;
+    flushWord(); S.week = fromYmd(b.dataset.week); S.qtDay = defaultQtDay(); renderWord(); fitPager();
+    $('pageWord').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  /* ---------- pager: swipe sideways between 기도 기록 and 말씀 노트 ---------- */
+  const pager = $('pager'), pages = [$('pagePray'), $('pageWord')];
+  let curPage = 0;
+  function fitPager() { pager.style.height = pages[curPage].offsetHeight + 'px'; }
+  function setPage(i) {
+    if (i === curPage) return;
+    curPage = i;
+    $('goPray').setAttribute('aria-selected', i === 0);
+    $('goWord').setAttribute('aria-selected', i === 1);
+    document.querySelectorAll('.dots i').forEach((d, j) => d.classList.toggle('on', j === i));
+    fitPager();
+    const top = $('pager').getBoundingClientRect().top + window.scrollY - 120;
+    if (window.scrollY > top) window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+  }
+  pager.addEventListener('scroll', () => {
+    const step = pages[1].offsetLeft - pages[0].offsetLeft;
+    setPage(pager.scrollLeft > step / 2 ? 1 : 0);
+  }, { passive: true });
+  function goPage(i) {
+    pager.scrollTo({ left: pages[i].offsetLeft - pages[0].offsetLeft, behavior: 'smooth' });
+  }
+  $('goPray').addEventListener('click', () => goPage(0));
+  $('goWord').addEventListener('click', () => goPage(1));
+  if (window.ResizeObserver) new ResizeObserver(fitPager).observe(pages[0]);
+  if (window.ResizeObserver) new ResizeObserver(fitPager).observe(pages[1]);
+  window.addEventListener('resize', fitPager);
 
   // verse editing
   function openVerse(open) {
@@ -553,7 +951,7 @@ textarea, input[type="text"] {
 
   // backup: the whole record as one code the person can keep anywhere
   function makeCode() {
-    const json = JSON.stringify({ v: 1, years: S.years, verse: S.verse });
+    const json = JSON.stringify({ v: 2, years: S.years, verse: S.verse, word: S.word });
     return 'PT1:' + btoa(unescape(encodeURIComponent(json)));
   }
   $('backupCopy').addEventListener('click', () => {
@@ -580,8 +978,8 @@ textarea, input[type="text"] {
       $('backupMsg').textContent = '지금 이 휴대폰의 기록이 백업 내용으로 바뀌어요. 계속하려면 한 번 더 눌러 주세요.';
       return;
     }
-    S.years = data.years || {}; S.verse = data.verse || { text: '', ref: '' };
-    persist(); restoreArmed = false; $('restoreGo').textContent = '불러오기';
+    S.years = data.years || {}; S.verse = data.verse || { text: '', ref: '' }; S.word = data.word || {}; migrateWord();
+    persist(); renderWord(); restoreArmed = false; $('restoreGo').textContent = '불러오기';
     $('restoreArea').hidden = true; $('restoreText').value = '';
     $('backupMsg').textContent = '백업을 불러왔어요.';
     render();
@@ -590,7 +988,11 @@ textarea, input[type="text"] {
   lsLoad();
   if (!storageOk) $('storeNote').textContent = '이 브라우저는 저장을 막고 있어요(시크릿 모드 등). 일반 모드로 열어 주세요.';
   else $('storeNote').textContent = '로그인 없이 이 휴대폰에만 저장돼요. 다른 사람의 기록과 섞이지 않아요.';
+  $('goPrayIcon').innerHTML = blossom(0, 0, 0, 0.95, false).replace('class="bloom"', '');
+  migrateWord();
   render();
+  renderWord();
+  fitPager();
 })();
 </script>
 
