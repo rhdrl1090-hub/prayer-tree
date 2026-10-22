@@ -272,8 +272,15 @@ textarea, input[type="text"] {
 .person .nm { font-size: 1.08rem; }
 .person .rf { font-size: .76rem; color: var(--blossom-core); background: var(--blossom-soft); border-radius: 999px; padding: 1px 9px; }
 .person .vs { font-size: .84rem; color: var(--muted); margin-top: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
-.person .pr { font-size: .9rem; margin-top: 6px; padding-top: 6px; border-top: 2px dotted var(--line); white-space: pre-wrap; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.person .pr { font-size: .9rem; margin-top: 6px; padding-top: 6px; border-top: 2px dotted var(--line); white-space: pre-wrap; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
 .person .pr:empty, .person .vs:empty { display: none; }
+.person .pr::before { content: "기도제목"; display: block; font-size: .7rem; color: var(--blossom-core); margin-bottom: 1px; }
+.sheet-verse { background: var(--blossom-soft); border-radius: 16px; padding: 10px 14px; margin-bottom: 12px; font-size: .92rem; line-height: 1.7; }
+.sheet-verse .sv-ref { font-size: .78rem; color: var(--blossom-core); }
+.sheet-verse .sv-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.sheet-body p.pt { position: relative; padding-left: 20px; margin-bottom: .5em; }
+.sheet-body p.pt::before { content: ""; position: absolute; left: 4px; top: .8em; width: 8px; height: 8px; border-radius: 50%; background: var(--blossom-deep); }
+.pt-empty { color: var(--muted); }
 .people-empty { text-align: center; color: var(--muted); font-size: .88rem; padding: 18px 8px; }
 .sheet-body.person-form { font-size: 1rem; line-height: 1.6; display: flex; flex-direction: column; gap: 6px; padding-top: 2px; }
 .person-form .word-text { min-height: 110px; }
@@ -1010,10 +1017,10 @@ textarea, input[type="text"] {
     el.readOnly = long;            // read-only so a tap opens the popup instead of the keyboard
     if (btn) btn.hidden = !long;
   }
-  let sheetKind = null, sheetReturn = null;
+  let sheetKind = null, sheetReturn = null, sheetOnEdit = null;
   function openSheet(k) {
     const el = elFor(k); if (!el || !el.value.trim()) return;
-    sheetKind = k; sheetReturn = document.activeElement;
+    sheetKind = k; sheetReturn = document.activeElement; sheetOnEdit = null;
     const K = KINDS.find(x => x.k === k);
     $('sheet').querySelector('.sheet').className = 'sheet k-' + k;
     $('sheetChip').textContent = k === 'memo' ? '기도' : K ? K.chip : 'QT';
@@ -1042,6 +1049,8 @@ textarea, input[type="text"] {
     $('sheet').hidden = true;
     document.documentElement.style.overflow = '';
     const k = sheetKind; sheetKind = null;
+    if (edit && sheetOnEdit) { const f = sheetOnEdit; sheetOnEdit = null; f(); return; }
+    sheetOnEdit = null;
     if (edit && k) {
       const el = elFor(k);
       el.dataset.editing = '1'; el.readOnly = false; el.classList.remove('long');
@@ -1306,8 +1315,36 @@ textarea, input[type="text"] {
     $('pRef').dispatchEvent(new Event('input', { bubbles: true }));
     $('pVerse').dispatchEvent(new Event('input', { bubbles: true }));
   });
+  // read view of one person's 기도제목 in the shared popup; 수정하기 opens the editor
+  function openPersonView(id) {
+    const p = S.people.find(x => x.id === id); if (!p) return;
+    sheetKind = null; sheetReturn = document.activeElement; sheetOnEdit = () => openPerson(id);
+    $('sheet').querySelector('.sheet').className = 'sheet k-memo';
+    $('sheetChip').textContent = (p.name || '?').trim().charAt(0) || '?';
+    $('sheetTitle').textContent = (p.name || '이름 없음') + ' 기도제목';
+    const body = $('sheetBody'); body.innerHTML = '';
+    if (p.ref || p.verse) {
+      const box = document.createElement('div'); box.className = 'sheet-verse';
+      if (p.ref) { const r = document.createElement('div'); r.className = 'sv-ref'; r.textContent = '신년예배 말씀 · ' + p.ref; box.appendChild(r); }
+      if (p.verse) { const v = document.createElement('div'); v.className = 'sv-text'; v.textContent = p.verse; box.appendChild(v); }
+      body.appendChild(box);
+    }
+    const lines = (p.prayer || '').split(/\n+/).map(s => s.trim()).filter(Boolean);
+    if (!lines.length) { const e = document.createElement('p'); e.className = 'pt-empty'; e.textContent = '아직 적어 둔 기도제목이 없어요.'; body.appendChild(e); }
+    lines.forEach(line => { const el = document.createElement('p'); el.className = 'pt'; el.textContent = line.replace(/^[-•·*]\s*/, ''); body.appendChild(el); });
+    body.scrollTop = 0;
+    const link = $('sheetLink'), r = parseRef(p.ref);
+    if (r) { link.hidden = false; link.href = bibleUrl(r); link.innerHTML = OPEN_ICON + '<span></span>'; link.querySelector('span').textContent = '개역개정 보기'; }
+    else link.hidden = true;
+    $('sheet').hidden = false;
+    document.documentElement.style.overflow = 'hidden';
+    $('sheetDone').focus();
+  }
   $('addPerson').addEventListener('click', () => openPerson(null));
-  $('peopleList').addEventListener('click', e => { const b = e.target.closest('[data-pid]'); if (b) openPerson(b.dataset.pid); });
+  $('peopleList').addEventListener('click', e => {
+    const b = e.target.closest('[data-pid]'); if (!b) return;
+    if (e.target.closest('.pr')) openPersonView(b.dataset.pid); else openPerson(b.dataset.pid);
+  });
   $('pDone').addEventListener('click', closePerson);
   $('pClose').addEventListener('click', closePerson);
   $('pSheet').addEventListener('click', e => { if (e.target === $('pSheet')) closePerson(); });
