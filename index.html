@@ -187,10 +187,11 @@ textarea, input[type="text"] {
 .memo-head { display: flex; justify-content: space-between; align-items: baseline; }
 
 /* two pages side by side: swipe or tap the switch */
-.page-switch { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.page-switch { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
 .page-switch button {
-  border: 0; border-radius: 18px; padding: 10px 8px; background: var(--surface); color: var(--muted);
-  box-shadow: 0 4px 14px var(--shadow); display: flex; align-items: center; justify-content: center; gap: 6px; font-size: .95rem;
+  border: 0; border-radius: 18px; padding: 8px 4px; background: var(--surface); color: var(--muted);
+  box-shadow: 0 4px 14px var(--shadow); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  font-size: .8rem; line-height: 1.2; white-space: nowrap;
 }
 .page-switch button svg { width: 18px; height: 18px; }
 .page-switch button[aria-selected="true"] { background: var(--ink); color: var(--bg); }
@@ -217,11 +218,12 @@ textarea, input[type="text"] {
 .k-sun .kind-chip { background: var(--blossom-soft); color: var(--blossom-core); }
 .k-fri .kind-chip { background: var(--sky); color: var(--sat); }
 .k-qt .kind-chip { background: var(--leaf-soft); color: var(--leaf); }
+.k-memo .kind-chip { background: var(--blossom-soft); color: var(--blossom-core); }
 .k-youth .kind-chip { background: var(--butter); color: var(--bark); }
 .ref-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .field-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .full-btn { border: 0; border-radius: 999px; padding: 3px 10px; font-size: .74rem; background: var(--blossom-soft); color: var(--blossom-core); }
-.word-text.long[readonly] {
+.longable.long[readonly], .word-text.long[readonly] {
   cursor: pointer; overflow: hidden;
   -webkit-mask-image: linear-gradient(#000 62%, transparent); mask-image: linear-gradient(#000 62%, transparent);
 }
@@ -247,6 +249,36 @@ textarea, input[type="text"] {
 .sheet-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 12px 16px 16px; border-top: 2px dotted var(--line); }
 .sheet-foot .ref-link { margin: 0; }
 .sheet-btns { display: flex; gap: 8px; margin-left: auto; }
+.btn.danger { color: var(--sun-day); border-color: var(--blossom-soft); }
+.btn.danger.armed { background: var(--sun-day); border-color: var(--sun-day); color: var(--on-accent); }
+
+/* 기도 노트: people to pray for */
+.add-person { width: 100%; margin-top: 12px; padding: 11px; font-size: 1rem; }
+.people-list { display: flex; flex-direction: column; gap: 10px; }
+.person {
+  display: grid; grid-template-columns: 46px minmax(0, 1fr); gap: 12px; align-items: start; text-align: left;
+  border: 0; background: var(--surface); border-radius: 22px; padding: 14px; box-shadow: 0 6px 18px var(--shadow); width: 100%;
+}
+.person:active { transform: scale(.985); }
+.avatar {
+  width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; flex: none;
+  font-size: 1.15rem; background: var(--blossom-soft); color: var(--blossom-core);
+}
+.avatar.c1 { background: var(--leaf-soft); color: var(--leaf); }
+.avatar.c2 { background: var(--butter); color: var(--bark); }
+.avatar.c3 { background: var(--sky); color: var(--sat); }
+.person .info { display: block; min-width: 0; }
+.person .who { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.person .nm { font-size: 1.08rem; }
+.person .rf { font-size: .76rem; color: var(--blossom-core); background: var(--blossom-soft); border-radius: 999px; padding: 1px 9px; }
+.person .vs { font-size: .84rem; color: var(--muted); margin-top: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.person .pr { font-size: .9rem; margin-top: 6px; padding-top: 6px; border-top: 2px dotted var(--line); white-space: pre-wrap; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.person .pr:empty, .person .vs:empty { display: none; }
+.people-empty { text-align: center; color: var(--muted); font-size: .88rem; padding: 18px 8px; }
+.sheet-body.person-form { font-size: 1rem; line-height: 1.6; display: flex; flex-direction: column; gap: 6px; padding-top: 2px; }
+.person-form .word-text { min-height: 110px; }
+.person-form .lined { margin-top: 0; min-height: 160px; box-shadow: inset 0 0 0 2px var(--line); }
+.person-form input[type="text"], .person-form .word-text { background: var(--bg); border-color: transparent; }
 @keyframes fadein { from { opacity: 0; } }
 @keyframes sheetin { from { transform: translateY(24px) scale(.97); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .sheet-backdrop, .sheet { animation: none; } }
@@ -315,12 +347,14 @@ textarea, input[type="text"] {
   <div class="page-switch" role="tablist" aria-label="페이지">
     <button type="button" role="tab" id="goPray" aria-selected="true" aria-controls="pagePray">
       <svg viewBox="-10 -10 20 20" aria-hidden="true" id="goPrayIcon"></svg>기도 기록</button>
+    <button type="button" role="tab" id="goPeople" aria-selected="false" aria-controls="pagePeople">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20 C6 16 3 12.5 3 9 C3 6.5 5 4.5 7.5 4.5 C9.3 4.5 11 5.6 12 7.2 C13 5.6 14.7 4.5 16.5 4.5 C19 4.5 21 6.5 21 9 C21 12.5 18 16 12 20 Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>기도 노트</button>
     <button type="button" role="tab" id="goWord" aria-selected="false" aria-controls="pageWord">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6 C9 4 6 4 3 5 V19 C6 18 9 18 12 20 C15 18 18 18 21 19 V5 C18 4 15 4 12 6 Z M12 6 V20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>말씀 노트</button>
     <button type="button" role="tab" id="goQt" aria-selected="false" aria-controls="pageQt">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 V5 M12 19 V21 M3 12 H5 M19 12 H21 M5.6 5.6 L7 7 M17 17 L18.4 18.4 M5.6 18.4 L7 17 M17 7 L18.4 5.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>QT</button>
   </div>
-  <div class="dots" aria-hidden="true"><i class="on"></i><i></i><i></i></div>
+  <div class="dots" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i></div>
 
   <div class="pager" id="pager">
   <div class="page" id="pagePray" role="tabpanel" aria-label="기도 기록">
@@ -375,7 +409,9 @@ textarea, input[type="text"] {
         <span class="save-state" id="memoState"></span>
       </div>
       <button type="button" class="check-btn" id="checkBtn" aria-pressed="false"></button>
-      <textarea id="memo" placeholder="오늘의 기도 제목, 응답받은 일, 감사한 일을 적어 보세요."></textarea>
+      <div class="field-row" style="margin-top:10px"><span class="field-label">기도 메모</span>
+        <button type="button" class="full-btn" data-full="memo" hidden>전체 보기</button></div>
+      <textarea id="memo" class="longable" placeholder="오늘의 기도 제목, 응답받은 일, 감사한 일을 적어 보세요."></textarea>
     </section>
     <section class="card">
       <span class="label" id="noteListLabel">이달의 기도 메모</span>
@@ -414,6 +450,15 @@ textarea, input[type="text"] {
 
   </div><!-- /pagePray -->
 
+  <div class="page" id="pagePeople" role="tabpanel" aria-label="기도 노트">
+    <section class="card people-intro">
+      <div class="memo-head"><span class="day-title">함께 기도할 사람</span><span class="label" id="peopleCount"></span></div>
+      <p class="hint" style="margin-top:4px">이름, 신년예배 말씀, 그 사람을 위한 기도제목을 적어 두고 기도해요.</p>
+      <button type="button" class="btn primary add-person" id="addPerson">+ 사람 추가</button>
+    </section>
+    <div class="people-list" id="peopleList"></div>
+  </div><!-- /pagePeople -->
+
   <div class="page" id="pageWord" role="tabpanel" aria-label="말씀 노트">
     <div class="nav">
       <button class="nav-btn" id="wPrev" type="button" aria-label="지난 주"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 L8 12 L15 19" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
@@ -451,6 +496,33 @@ textarea, input[type="text"] {
 
   <p class="note" id="storeNote"></p>
 
+  <div class="sheet-backdrop" id="pSheet" hidden>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="pTitle">
+      <div class="sheet-head">
+        <span class="avatar" id="pAvatar"></span>
+        <h3 id="pTitle"></h3>
+        <span class="save-state" id="pState"></span>
+        <button type="button" class="sheet-x" id="pClose" aria-label="닫기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6 L18 18 M18 6 L6 18" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></button>
+      </div>
+      <div class="sheet-body person-form">
+        <label class="field-label" for="pName">이름</label>
+        <input type="text" id="pName" data-pf="name" placeholder="예) 김은혜 집사님" autocomplete="off">
+        <label class="field-label" for="pRef">신년예배 말씀 · 본문</label>
+        <input type="text" id="pRef" data-pf="ref" placeholder="예) 이사야 41:10" autocomplete="off">
+        <div class="ref-row"><a class="ref-link" id="pLink" target="_blank" rel="noopener" hidden></a>
+          <button type="button" class="copy-btn" hidden>구절 복사</button></div>
+        <label class="field-label" for="pVerse">말씀</label>
+        <textarea class="word-text" id="pVerse" data-pf="verse" placeholder="신년예배 때 받은 말씀을 적거나, 갓피플성경에서 복사한 구절을 붙여넣으세요."></textarea>
+        <label class="field-label" for="pPrayer">기도제목</label>
+        <textarea class="lined" id="pPrayer" data-pf="prayer" placeholder="이 사람을 위해 기도할 제목을 적어 보세요."></textarea>
+      </div>
+      <div class="sheet-foot">
+        <button type="button" class="btn danger" id="pDelete">삭제</button>
+        <div class="sheet-btns"><button type="button" class="btn primary" id="pDone">완료</button></div>
+      </div>
+    </div>
+  </div>
+
   <div class="sheet-backdrop" id="sheet" hidden>
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
       <div class="sheet-head">
@@ -480,7 +552,8 @@ textarea, input[type="text"] {
     years: {},          // { "2026": { days: { "10": [1,3] }, notes: { "10": { "3": "..." } }, memo: {} (old monthly memos) } }
     verse: { text: '', ref: '' },
     sel: now.getDate(),  // selected day in the month view
-    word: {},            // { "2026-10-18" (week's Sunday): { sun|fri|qt: { ref, title, text, think } } }
+    word: {},            // { "2026-10-18" (week's Sunday): { sun|fri|youth: {...}, qtd: { "0".."6": {...} } } }
+    people: [],          // [{ id, name, ref, verse, prayer }] — 기도 노트
     week: null           // Sunday (Date) of the week shown on the sermon page
   };
   function defaultSel() { return S.y === now.getFullYear() && S.m === now.getMonth() + 1 ? now.getDate() : 1; }
@@ -492,13 +565,13 @@ textarea, input[type="text"] {
   function lsLoad() {
     try {
       const raw = localStorage.getItem(LS_KEY);
-      if (raw) { const d = JSON.parse(raw); S.years = d.years || {}; S.verse = d.verse || S.verse; S.word = d.word || {}; }
+      if (raw) { const d = JSON.parse(raw); S.years = d.years || {}; S.verse = d.verse || S.verse; S.word = d.word || {}; S.people = Array.isArray(d.people) ? d.people : []; }
     } catch (e) { storageOk = false; }
   }
   function setSaving(t) { $('saveState').textContent = t; }
   function persist() {
     try {
-      localStorage.setItem(LS_KEY, JSON.stringify({ years: S.years, verse: S.verse, word: S.word }));
+      localStorage.setItem(LS_KEY, JSON.stringify({ years: S.years, verse: S.verse, word: S.word, people: S.people }));
       setSaving('이 휴대폰에 저장됨');
     } catch (e) {
       storageOk = false;
@@ -661,7 +734,11 @@ textarea, input[type="text"] {
     const on = set.has(d);
     $('checkBtn').setAttribute('aria-pressed', on);
     $('checkBtn').innerHTML = on ? CHECK_ICON + '<span>기도했어요</span>' : '<span>이날 기도했어요 체크하기</span>';
-    if (document.activeElement !== $('memo')) $('memo').value = dayNote(S.y, S.m, d);
+    if (document.activeElement !== $('memo')) {
+      const memo = $('memo'); delete memo.dataset.editing;
+      memo.value = dayNote(S.y, S.m, d);
+      if (typeof markLong === 'function') markLong('memo');
+    }
   }
 
   function renderNoteList() {
@@ -921,8 +998,11 @@ textarea, input[type="text"] {
   }
 
   /* ---------- long 말씀: tapping the field opens the whole passage in a popup ---------- */
+  // key is a service kind (sun / fri / youth / qt) or 'memo' for the daily prayer memo
+  function elFor(k) { return k === 'memo' ? $('memo') : (k ? $(k + '-text') : null); }
+  function keyOf(el) { return el.id === 'memo' ? 'memo' : el.dataset.kind; }
   function markLong(k) {
-    const el = $(k + '-text'), btn = document.querySelector('[data-full="' + k + '"]');
+    const el = elFor(k), btn = document.querySelector('[data-full="' + k + '"]');
     if (!el || el.dataset.editing) return;
     el.readOnly = false; el.classList.remove('long');
     const long = !!el.value.trim() && el.scrollHeight > el.clientHeight + 4;
@@ -932,13 +1012,14 @@ textarea, input[type="text"] {
   }
   let sheetKind = null, sheetReturn = null;
   function openSheet(k) {
-    const el = $(k + '-text'); if (!el.value.trim()) return;
+    const el = elFor(k); if (!el || !el.value.trim()) return;
     sheetKind = k; sheetReturn = document.activeElement;
     const K = KINDS.find(x => x.k === k);
     $('sheet').querySelector('.sheet').className = 'sheet k-' + k;
-    $('sheetChip').textContent = K ? K.chip : 'QT';
-    const ref = $(k + '-ref').value.trim();
-    $('sheetTitle').textContent = ref || (K ? K.name + ' 말씀' : 'QT 말씀');
+    $('sheetChip').textContent = k === 'memo' ? '기도' : K ? K.chip : 'QT';
+    const ref = k === 'memo' ? '' : $(k + '-ref').value.trim();
+    $('sheetTitle').textContent = k === 'memo' ? $('selTitle').textContent.replace(' · 오늘', '') + ' 기도 메모'
+      : ref || (K ? K.name + ' 말씀' : 'QT 말씀');
     const body = $('sheetBody'); body.innerHTML = '';
     el.value.split(/\n+/).forEach(line => {
       if (!line.trim()) return;
@@ -962,7 +1043,7 @@ textarea, input[type="text"] {
     document.documentElement.style.overflow = '';
     const k = sheetKind; sheetKind = null;
     if (edit && k) {
-      const el = $(k + '-text');
+      const el = elFor(k);
       el.dataset.editing = '1'; el.readOnly = false; el.classList.remove('long');
       const btn = document.querySelector('[data-full="' + k + '"]'); if (btn) btn.hidden = true;
       el.focus(); el.setSelectionRange(el.value.length, el.value.length);
@@ -970,17 +1051,17 @@ textarea, input[type="text"] {
   }
   document.addEventListener('click', e => {
     // a field left after editing goes back to tap-to-open (backup for browsers that skip focusout)
-    document.querySelectorAll('.word-text[data-editing]').forEach(t => {
-      if (t !== e.target && document.activeElement !== t) { delete t.dataset.editing; markLong(t.dataset.kind); }
+    document.querySelectorAll('.word-text[data-editing], .longable[data-editing]').forEach(t => {
+      if (t !== e.target && document.activeElement !== t) { delete t.dataset.editing; markLong(keyOf(t)); }
     });
     const full = e.target.closest('[data-full]');
     if (full) { openSheet(full.dataset.full); return; }
-    const ta = e.target.closest('.word-text.long');
-    if (ta && ta.readOnly) openSheet(ta.dataset.kind);
+    const ta = e.target.closest('.word-text.long, .longable.long');
+    if (ta && ta.readOnly) openSheet(keyOf(ta));
   });
   document.addEventListener('focusout', e => {
     const ta = e.target;
-    if (ta.classList && ta.classList.contains('word-text')) { delete ta.dataset.editing; markLong(ta.dataset.kind); }
+    if (ta.classList && (ta.classList.contains('word-text') || ta.classList.contains('longable'))) { delete ta.dataset.editing; markLong(keyOf(ta)); }
   });
   $('sheetClose').addEventListener('click', () => closeSheet(false));
   $('sheetDone').addEventListener('click', () => closeSheet(false));
@@ -1145,9 +1226,107 @@ textarea, input[type="text"] {
     $('pageQt').scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 
-  /* ---------- pager: swipe sideways between 기도 기록, 말씀 노트, QT ---------- */
-  const pager = $('pager'), pages = [$('pagePray'), $('pageWord'), $('pageQt')];
-  const tabs = [$('goPray'), $('goWord'), $('goQt')];
+  /* ---------- 기도 노트: people to pray for ---------- */
+  const P_FIELDS = ['name', 'ref', 'verse', 'prayer'];
+  let pCur = null, pTimer = null, pDirty = false, pDeleteArmed = false;
+  function avatarOf(p, i) {
+    const ch = (p.name || '').trim().charAt(0) || '?';
+    return { ch, cls: 'avatar c' + (i % 4) };
+  }
+  function renderPeople() {
+    const list = $('peopleList'); list.innerHTML = '';
+    $('peopleCount').textContent = S.people.length ? S.people.length + '명' : '';
+    if (!S.people.length) {
+      const p = document.createElement('p'); p.className = 'people-empty';
+      p.textContent = '아직 적어 둔 사람이 없어요. "+ 사람 추가"를 눌러 가족, 친구, 공동체 지체를 적어 보세요.';
+      list.appendChild(p); return;
+    }
+    S.people.forEach((p, i) => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'person'; b.dataset.pid = p.id;
+      const av = avatarOf(p, i);
+      b.innerHTML = '<span class="' + av.cls + '"></span><span class="info"><span class="who"><span class="nm"></span><span class="rf"></span></span>' +
+        '<span class="vs"></span><span class="pr"></span></span>';
+      b.querySelector('.avatar').textContent = av.ch;
+      b.querySelector('.nm').textContent = p.name || '이름 없음';
+      const rf = b.querySelector('.rf'); if (p.ref) rf.textContent = p.ref; else rf.remove();
+      b.querySelector('.vs').textContent = p.verse || '';
+      b.querySelector('.pr').textContent = p.prayer || '';
+      list.appendChild(b);
+    });
+  }
+  function pEmpty(p) { return !P_FIELDS.some(f => p[f] && p[f].trim()); }
+  function openPerson(id) {
+    let p = S.people.find(x => x.id === id);
+    if (!p) { p = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6) }; S.people.push(p); }
+    pCur = p; pDeleteArmed = false;
+    $('pDelete').textContent = '삭제'; $('pDelete').classList.remove('armed');
+    P_FIELDS.forEach(f => { $('p' + f.charAt(0).toUpperCase() + f.slice(1)).value = p[f] || ''; });
+    paintPersonHead();
+    updateRefLink($('pLink'), $('pRef').value);
+    $('pState').textContent = '';
+    $('pSheet').hidden = false;
+    $('pSheet').querySelector('.sheet-body').scrollTop = 0;
+    document.documentElement.style.overflow = 'hidden';
+    if (!p.name) $('pName').focus();
+  }
+  function paintPersonHead() {
+    const i = S.people.indexOf(pCur), av = avatarOf(pCur, i < 0 ? 0 : i);
+    $('pAvatar').className = av.cls; $('pAvatar').textContent = av.ch;
+    $('pTitle').textContent = pCur.name && pCur.name.trim() ? pCur.name : '새로운 사람';
+  }
+  function flushPerson() {
+    if (!pDirty) return;
+    pDirty = false; clearTimeout(pTimer);
+    persist(); $('pState').textContent = '저장됨';
+  }
+  function closePerson() {
+    if ($('pSheet').hidden) return;
+    flushPerson();
+    if (pCur && pEmpty(pCur)) { S.people = S.people.filter(x => x !== pCur); persist(); }
+    pCur = null;
+    $('pSheet').hidden = true;
+    document.documentElement.style.overflow = '';
+    renderPeople(); fitPager();
+  }
+  $('pSheet').addEventListener('input', e => {
+    const f = e.target.dataset.pf; if (!f || !pCur) return;
+    const v = e.target.value;
+    if (v.trim()) pCur[f] = v; else delete pCur[f];
+    if (f === 'name') paintPersonHead();
+    if (f === 'ref') updateRefLink($('pLink'), v);
+    pDirty = true; $('pState').textContent = '입력 중…';
+    clearTimeout(pTimer); pTimer = setTimeout(flushPerson, 800);
+  });
+  $('pVerse').addEventListener('paste', e => {
+    const got = parseCopiedVerses((e.clipboardData || window.clipboardData).getData('text'));
+    if (!got) return;
+    e.preventDefault();
+    $('pRef').value = got.ref;
+    $('pVerse').value = $('pVerse').value.trim() ? $('pVerse').value.trimEnd() + '\n' + got.text : got.text;
+    $('pRef').dispatchEvent(new Event('input', { bubbles: true }));
+    $('pVerse').dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  $('addPerson').addEventListener('click', () => openPerson(null));
+  $('peopleList').addEventListener('click', e => { const b = e.target.closest('[data-pid]'); if (b) openPerson(b.dataset.pid); });
+  $('pDone').addEventListener('click', closePerson);
+  $('pClose').addEventListener('click', closePerson);
+  $('pSheet').addEventListener('click', e => { if (e.target === $('pSheet')) closePerson(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closePerson(); });
+  $('pDelete').addEventListener('click', () => {
+    if (!pCur) return;
+    if (!pDeleteArmed) {
+      pDeleteArmed = true; $('pDelete').textContent = '한 번 더 누르면 삭제'; $('pDelete').classList.add('armed');
+      return;
+    }
+    S.people = S.people.filter(x => x !== pCur); pCur = null; pDirty = false; clearTimeout(pTimer);
+    persist();
+    $('pSheet').hidden = true; document.documentElement.style.overflow = '';
+    renderPeople(); fitPager();
+  });
+
+  /* ---------- pager: swipe sideways between 기도 기록, 기도 노트, 말씀 노트, QT ---------- */
+  const pager = $('pager'), pages = [$('pagePray'), $('pagePeople'), $('pageWord'), $('pageQt')];
+  const tabs = [$('goPray'), $('goPeople'), $('goWord'), $('goQt')];
   let curPage = 0;
   function fitPager() { pager.style.height = pages[curPage].offsetHeight + 'px'; }
   function setPage(i) {
@@ -1189,7 +1368,7 @@ textarea, input[type="text"] {
 
   // backup: the whole record as one code the person can keep anywhere
   function makeCode() {
-    const json = JSON.stringify({ v: 2, years: S.years, verse: S.verse, word: S.word });
+    const json = JSON.stringify({ v: 3, years: S.years, verse: S.verse, word: S.word, people: S.people });
     return 'PT1:' + btoa(unescape(encodeURIComponent(json)));
   }
   $('backupCopy').addEventListener('click', () => {
@@ -1217,6 +1396,7 @@ textarea, input[type="text"] {
       return;
     }
     S.years = data.years || {}; S.verse = data.verse || { text: '', ref: '' }; S.word = data.word || {}; migrateWord();
+    S.people = Array.isArray(data.people) ? data.people : []; renderPeople();
     persist(); renderWord(); renderQt(); restoreArmed = false; $('restoreGo').textContent = '불러오기';
     $('restoreArea').hidden = true; $('restoreText').value = '';
     $('backupMsg').textContent = '백업을 불러왔어요.';
@@ -1231,7 +1411,10 @@ textarea, input[type="text"] {
   render();
   renderWord();
   renderQt();
+  renderPeople();
   fitPager();
+  // the bundled font can change line heights, so re-measure long fields once it is ready
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { ['memo', 'sun', 'fri', 'youth', 'qt'].forEach(markLong); fitPager(); });
 })();
 </script>
 
